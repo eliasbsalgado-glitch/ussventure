@@ -3,16 +3,8 @@
 // Acessando registros classificados nivel 3
 // ============================================
 
-import fs from 'fs';
-import path from 'path';
 import TripulacaoClient from './TripulacaoClient';
-
-const FILE = path.join(process.cwd(), 'data', 'fichas.json');
-
-function getFichas() {
-  if (!fs.existsSync(FILE)) return [];
-  return JSON.parse(fs.readFileSync(FILE, 'utf-8'));
-}
+import sql from '@/lib/db';
 
 export const metadata = {
   title: 'Tripulacao — USS Venture',
@@ -21,8 +13,12 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default function TripulacaoPage() {
-  const fichas = getFichas();
+export default async function TripulacaoPage() {
+  const rows = await sql`SELECT slug, nome, patente, divisao, departamento, foto FROM fichas ORDER BY nome`;
+  const fichas = rows.map(r => ({
+    slug: r.slug, nome: r.nome, patente: r.patente,
+    divisao: r.divisao, departamento: r.departamento, foto: r.foto,
+  }));
 
   return (
     <div>

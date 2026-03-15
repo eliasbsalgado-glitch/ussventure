@@ -5,14 +5,19 @@
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import fs from 'fs';
-import path from 'path';
+import sql from '@/lib/db';
 
-const FILE = path.join(process.cwd(), 'data', 'fichas.json');
-
-function getFichas() {
-  if (!fs.existsSync(FILE)) return [];
-  return JSON.parse(fs.readFileSync(FILE, 'utf-8'));
+async function getFicha(slug) {
+  const rows = await sql`SELECT * FROM fichas WHERE slug = ${slug}`;
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    slug: r.slug, nome: r.nome, nascimentoSL: r.nascimento_sl, cidade: r.cidade,
+    raca: r.raca, admissao: r.admissao, patente: r.patente, divisao: r.divisao,
+    departamento: r.departamento, foto: r.foto, historia: r.historia,
+    timeline: r.timeline || [], condecoracoes: r.condecoracoes || [],
+    cursos: r.cursos || [], diarios: r.diarios || [],
+  };
 }
 
 export function generateStaticParams() {
@@ -21,7 +26,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const ficha = getFichas().find(f => f.slug === slug);
+  const ficha = await getFicha(slug);
   if (!ficha) return { title: 'Tripulante nao encontrado' };
   return { title: `${ficha.nome} — Ficha de Servico`, description: `Ficha de servico de ${ficha.nome}` };
 }
@@ -30,7 +35,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function FichaPage({ params }) {
   const { slug } = await params;
-  const ficha = getFichas().find(f => f.slug === slug);
+  const ficha = await getFicha(slug);
   if (!ficha) notFound();
 
   // Calcular tempo de servico descontando periodos em reserva
