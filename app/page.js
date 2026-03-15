@@ -31,6 +31,10 @@ export default async function HomePage() {
           <div className="lcars-stat-value">{stats.total}</div>
           <div className="lcars-stat-label">Tripulantes Registrados</div>
         </div>
+        <div className="lcars-stat" style={{ borderColor: 'var(--lcars-teal)' }}>
+          <div className="lcars-stat-value" style={{ color: 'var(--lcars-teal)' }}>{stats.ativos}</div>
+          <div className="lcars-stat-label">Tripulantes Ativos</div>
+        </div>
         <div className="lcars-stat" style={{ borderColor: 'var(--lcars-blue)' }}>
           <div className="lcars-stat-value" style={{ color: 'var(--lcars-blue)' }}>{activeNaves}</div>
           <div className="lcars-stat-label">Naves em Servico</div>
