@@ -380,11 +380,11 @@ export default function MissaoDetailPage() {
               borderRadius: 'var(--lcars-radius-sm)', border: '1px solid #333',
             }}>
               <div style={{ fontSize: '0.65rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>
-                Adicionar Foto da Missao (Link direto Imgur)
+                Adicionar Foto da Missao (Link direto da imagem)
               </div>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                 <input type="url" value={newFotoUrl} onChange={e => setNewFotoUrl(e.target.value)}
-                  placeholder="https://i.imgur.com/exemplo.jpg" required
+                  placeholder="https://exemplo.com/imagem.jpg" required
                   style={{
                     flex: 1, padding: '6px 10px', background: 'rgba(0,0,0,0.4)',
                     border: '1px solid #555', borderRadius: 'var(--lcars-radius-sm)',

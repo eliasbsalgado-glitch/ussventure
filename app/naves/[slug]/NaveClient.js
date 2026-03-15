@@ -322,7 +322,7 @@ export default function NaveClient({ nave, headerColor }) {
                     type="url"
                     value={fotoUrl}
                     onChange={e => setFotoUrl(e.target.value)}
-                    placeholder="https://i.imgur.com/exemplo.jpg"
+                    placeholder="https://exemplo.com/imagem.jpg"
                     required
                     style={{
                       flex: '1 1 300px', padding: '8px 12px', background: 'rgba(0,0,0,0.4)',
@@ -369,7 +369,7 @@ export default function NaveClient({ nave, headerColor }) {
                   marginTop: '10px', fontSize: '0.6rem', color: '#666',
                   lineHeight: '1.5', fontStyle: 'italic',
                 }}>
-                  Dica: No Imgur, clique com botao direito na imagem → &quot;Copiar endereco da imagem&quot;. O link deve comecar com <span style={{ color: 'var(--lcars-teal)' }}>i.imgur.com</span> e terminar com .jpg ou .png
+                  Dica: Clique com botao direito na imagem → &quot;Copiar endereco da imagem&quot;. O link deve ser direto e terminar com <span style={{ color: 'var(--lcars-teal)' }}>.jpg ou .png</span>
                 </div>
               </form>
             )}
@@ -610,9 +610,9 @@ export default function NaveClient({ nave, headerColor }) {
                 <textarea value={mTexto} onChange={e => setMTexto(e.target.value)} placeholder="Relatorio da missao..." rows={6} required style={{ resize: 'vertical' }} />
               </div>
               <div className="lcars-form-group" style={{ marginBottom: '12px' }}>
-                <label>Fotos da Missao (URLs Imgur, uma por linha)</label>
+                <label>Fotos da Missao (Link direto da imagem, uma por linha)</label>
                 <textarea value={mFotos} onChange={e => setMFotos(e.target.value)}
-                  placeholder={"https://i.imgur.com/foto1.jpg\nhttps://i.imgur.com/foto2.jpg"}
+                  placeholder={"https://exemplo.com/foto1.jpg\nhttps://exemplo.com/foto2.jpg"}
                   rows={3} style={{ resize: 'vertical', fontSize: '0.8rem' }} />
               </div>
 
@@ -715,7 +715,7 @@ export default function NaveClient({ nave, headerColor }) {
                             type="url"
                             value={editNewFotoUrl}
                             onChange={e => setEditNewFotoUrl(e.target.value)}
-                            placeholder="https://i.imgur.com/exemplo.jpg"
+                            placeholder="https://exemplo.com/imagem.jpg"
                             style={{
                               flex: 1, padding: '6px 10px', background: 'rgba(0,0,0,0.4)',
                               border: '1px solid #555', borderRadius: 'var(--lcars-radius-sm)',
