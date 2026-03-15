@@ -40,88 +40,21 @@ export default function HistoricoPage() {
         gap: '16px',
         marginBottom: '30px',
       }}>
-        <Link href="/historico/terra-prime" style={{ textDecoration: 'none' }}>
-          <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-teal)', cursor: 'pointer', overflow: 'hidden' }}>
-            <div style={{ position: 'relative', height: '180px', overflow: 'hidden' }}>
-              <img src="/img/historico/Projeto_Terra_prime01.jpg" alt="Projeto Terra Prime"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 }} />
-              <div style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0,
-                background: 'linear-gradient(transparent, rgba(0,0,0,0.9))',
-                padding: '20px',
-              }}>
-                <div style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--lcars-teal)' }}>
-                  Projeto Terra Prime
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
-                  Culturas e civilizacoes do Universo Star Trek recriadas no Second Life
-                </div>
+        <Link href="/historico/missoes" style={{ textDecoration: 'none' }}>
+          <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-green)', cursor: 'pointer', overflow: 'hidden' }}>
+            <div style={{ padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--lcars-green)' }}>
+                Log de Missoes
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
+                Registro de todas as missoes realizadas pela esquadra
               </div>
             </div>
             <div className="lcars-card-body" style={{ padding: '12px 16px' }}>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-teal)', color: '#000', fontSize: '0.65rem' }}>Tribunal Klingon</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-sky)', color: '#000', fontSize: '0.65rem' }}>Templo Vulcano</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-purple)', color: '#fff', fontSize: '0.65rem' }}>Senado Romulano</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-green)', color: '#000', fontSize: '0.65rem' }}>Praia de Risa</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-blue)', color: '#000', fontSize: '0.65rem' }}>+3 locais</span>
-              </div>
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/historico/estacoes" style={{ textDecoration: 'none' }}>
-          <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-sky)', cursor: 'pointer', overflow: 'hidden' }}>
-            <div style={{ position: 'relative', height: '180px', overflow: 'hidden' }}>
-              <img src="/img/historico/SB245_025.jpg" alt="Estacoes Espaciais"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 }} />
-              <div style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0,
-                background: 'linear-gradient(transparent, rgba(0,0,0,0.9))',
-                padding: '20px',
-              }}>
-                <div style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--lcars-sky)' }}>
-                  Estacoes Espaciais
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
-                  Bases estelares e estacoes orbitais construidas ao longo dos anos
-                </div>
-              </div>
-            </div>
-            <div className="lcars-card-body" style={{ padding: '12px 16px' }}>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-sky)', color: '#000', fontSize: '0.65rem' }}>SB-245</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-lavender)', color: '#000', fontSize: '0.65rem' }}>ET 71854</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.65rem' }}>DS6 Elim Garak</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-blue)', color: '#000', fontSize: '0.65rem' }}>Doca Espacial</span>
-              </div>
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/historico/fanfilme" style={{ textDecoration: 'none' }}>
-          <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-red)', cursor: 'pointer', overflow: 'hidden' }}>
-            <div style={{ position: 'relative', height: '180px', overflow: 'hidden' }}>
-              <img src="/img/historico/Cartaz_Fanfilme.jpg" alt="Fanfilme USS Andor Phoenix"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', opacity: 0.7 }} />
-              <div style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0,
-                background: 'linear-gradient(transparent, rgba(0,0,0,0.9))',
-                padding: '20px',
-              }}>
-                <div style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--lcars-red)' }}>
-                  Fanfilme Phoenix
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
-                  1o fanfilme brasileiro de Star Trek — 2011
-                </div>
-              </div>
-            </div>
-            <div className="lcars-card-body" style={{ padding: '12px 16px' }}>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-red)', color: '#fff', fontSize: '0.65rem' }}>Parte 1</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-red)', color: '#fff', fontSize: '0.65rem' }}>Parte 2</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.65rem' }}>YouTube</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-green)', color: '#000', fontSize: '0.65rem' }}>Missoes</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.65rem' }}>Diarios</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-sky)', color: '#000', fontSize: '0.65rem' }}>Tripulacao</span>
               </div>
             </div>
           </div>
@@ -148,26 +81,6 @@ export default function HistoricoPage() {
           </div>
         </Link>
 
-        <Link href="/historico/missoes" style={{ textDecoration: 'none' }}>
-          <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-green)', cursor: 'pointer', overflow: 'hidden' }}>
-            <div style={{ padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
-              <div style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--lcars-green)' }}>
-                Log de Missoes
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
-                Registro de todas as missoes realizadas pela esquadra
-              </div>
-            </div>
-            <div className="lcars-card-body" style={{ padding: '12px 16px' }}>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-green)', color: '#000', fontSize: '0.65rem' }}>Missoes</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.65rem' }}>Diarios</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-sky)', color: '#000', fontSize: '0.65rem' }}>Tripulacao</span>
-              </div>
-            </div>
-          </div>
-        </Link>
-
         <Link href="/historico/cronicas" style={{ textDecoration: 'none' }}>
           <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-orange)', cursor: 'pointer', overflow: 'hidden' }}>
             <div style={{ padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
@@ -181,7 +94,6 @@ export default function HistoricoPage() {
             <div className="lcars-card-body" style={{ padding: '12px 16px' }}>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.65rem' }}>HQ</span>
-                <span className="lcars-badge" style={{ background: 'var(--lcars-sky)', color: '#000', fontSize: '0.65rem' }}>Flipbook</span>
               </div>
             </div>
           </div>
@@ -202,6 +114,69 @@ export default function HistoricoPage() {
                 <span className="lcars-badge" style={{ background: 'var(--lcars-sky)', color: '#000', fontSize: '0.65rem' }}>Revista</span>
                 <span className="lcars-badge" style={{ background: 'var(--lcars-lavender)', color: '#000', fontSize: '0.65rem' }}>42 Edicoes</span>
                 <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.65rem' }}>Acervo</span>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/historico/estacoes" style={{ textDecoration: 'none' }}>
+          <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-sky)', cursor: 'pointer', overflow: 'hidden' }}>
+            <div style={{ padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--lcars-sky)' }}>
+                Estacoes Espaciais
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
+                Bases estelares e estacoes orbitais construidas ao longo dos anos
+              </div>
+            </div>
+            <div className="lcars-card-body" style={{ padding: '12px 16px' }}>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-sky)', color: '#000', fontSize: '0.65rem' }}>SB-245</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-lavender)', color: '#000', fontSize: '0.65rem' }}>ET 71854</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.65rem' }}>DS6 Elim Garak</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-blue)', color: '#000', fontSize: '0.65rem' }}>Doca Espacial</span>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/historico/terra-prime" style={{ textDecoration: 'none' }}>
+          <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-teal)', cursor: 'pointer', overflow: 'hidden' }}>
+            <div style={{ padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--lcars-teal)' }}>
+                Projeto Terra Prime
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
+                Culturas e civilizacoes do Universo Star Trek recriadas no Second Life
+              </div>
+            </div>
+            <div className="lcars-card-body" style={{ padding: '12px 16px' }}>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-teal)', color: '#000', fontSize: '0.65rem' }}>Tribunal Klingon</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-sky)', color: '#000', fontSize: '0.65rem' }}>Templo Vulcano</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-purple)', color: '#fff', fontSize: '0.65rem' }}>Senado Romulano</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-green)', color: '#000', fontSize: '0.65rem' }}>Praia de Risa</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-blue)', color: '#000', fontSize: '0.65rem' }}>+3 locais</span>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/historico/fanfilme" style={{ textDecoration: 'none' }}>
+          <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-red)', cursor: 'pointer', overflow: 'hidden' }}>
+            <div style={{ padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--lcars-red)' }}>
+                Fanfilme Phoenix
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
+                1o fanfilme brasileiro de Star Trek — 2011
+              </div>
+            </div>
+            <div className="lcars-card-body" style={{ padding: '12px 16px' }}>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-red)', color: '#fff', fontSize: '0.65rem' }}>Parte 1</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-red)', color: '#fff', fontSize: '0.65rem' }}>Parte 2</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.65rem' }}>YouTube</span>
               </div>
             </div>
           </div>
