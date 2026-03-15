@@ -11,9 +11,14 @@ function getSession(request) {
 async function canManageMission(session, missao) {
   if (!session) return false;
   if (session.role === 'admin') return true;
-  // Capitão da nave?
   const rows = await sql`SELECT capitao_slug FROM naves_crew WHERE nave_slug = ${missao.nave_slug}`;
   return rows.length > 0 && session.fichaSlug && session.fichaSlug === rows[0].capitao_slug;
+}
+
+function isParticipant(session, missao) {
+  if (!session?.fichaSlug) return false;
+  const trip = missao.tripulantes || [];
+  return trip.some(t => t.fichaSlug === session.fichaSlug);
 }
 
 // GET — detalhes de uma missão
@@ -24,7 +29,7 @@ export async function GET(request, { params }) {
   return NextResponse.json(rows[0]);
 }
 
-// PUT — editar missão (capitão ou admin)
+// PUT — editar missão (capitão ou admin) + adicionar foto (participantes)
 export async function PUT(request, { params }) {
   const { id } = await params;
   const session = getSession(request);
@@ -34,11 +39,34 @@ export async function PUT(request, { params }) {
   if (rows.length === 0) return NextResponse.json({ error: 'Missao nao encontrada' }, { status: 404 });
 
   const missao = rows[0];
+  const body = await request.json();
+
+  // Ação especial: adicionar foto (qualquer participante pode)
+  if (body.action === 'addFoto') {
+    const canAdd = await canManageMission(session, missao) || isParticipant(session, missao);
+    if (!canAdd) return NextResponse.json({ error: 'Sem permissao' }, { status: 403 });
+    const currentFotos = missao.fotos || [];
+    const newFotos = [...currentFotos, body.url].filter(Boolean);
+    await sql`UPDATE missoes SET fotos = ${JSON.stringify(newFotos)}::jsonb WHERE id = ${id}`;
+    return NextResponse.json({ ok: true, fotos: newFotos });
+  }
+
+  // Ação especial: remover foto (capitão/admin)
+  if (body.action === 'removeFoto') {
+    if (!(await canManageMission(session, missao))) {
+      return NextResponse.json({ error: 'Sem permissao' }, { status: 403 });
+    }
+    const currentFotos = missao.fotos || [];
+    const newFotos = currentFotos.filter((_, i) => i !== body.index);
+    await sql`UPDATE missoes SET fotos = ${JSON.stringify(newFotos)}::jsonb WHERE id = ${id}`;
+    return NextResponse.json({ ok: true, fotos: newFotos });
+  }
+
+  // Edição completa — só capitão/admin
   if (!(await canManageMission(session, missao))) {
     return NextResponse.json({ error: 'Sem permissao' }, { status: 403 });
   }
 
-  const body = await request.json();
   const titulo = body.titulo || missao.titulo;
   const data = body.data || missao.data;
   const texto = body.texto !== undefined ? body.texto : missao.texto;

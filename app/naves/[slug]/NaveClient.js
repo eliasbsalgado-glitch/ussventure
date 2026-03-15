@@ -40,10 +40,13 @@ function normalizeImgurUrl(url) {
   return u;
 }
 
+const POSTOS_MISSAO = ['Piloto', 'Oficial de Ciencias/Comunicacoes', 'Oficial de Engenharia', 'Oficial Tatico', 'Tripulante'];
+
 export default function NaveClient({ nave, headerColor }) {
   const { user } = useAuth();
   const [crewData, setCrewData] = useState(null);
   const [fichasAtivas, setFichasAtivas] = useState([]);
+  const [allFichas, setAllFichas] = useState([]);
   const [loadingCrew, setLoadingCrew] = useState(true);
 
   // Crew management
@@ -53,13 +56,18 @@ export default function NaveClient({ nave, headerColor }) {
   const [useCustomPosto, setUseCustomPosto] = useState(false);
   const [crewMsg, setCrewMsg] = useState('');
 
-  // Mission form
+  // Mission form (unified API)
+  const [missoes, setMissoes] = useState([]);
   const [showMissionForm, setShowMissionForm] = useState(false);
   const [mTitulo, setMTitulo] = useState('');
   const [mData, setMData] = useState(new Date().toISOString().split('T')[0]);
   const [mTexto, setMTexto] = useState('');
   const [mFotos, setMFotos] = useState('');
   const [missionMsg, setMissionMsg] = useState('');
+  // Mission crew selection
+  const [mCrewSearch, setMCrewSearch] = useState('');
+  const [mSelectedCrew, setMSelectedCrew] = useState([]);
+  const [mCrewPosto, setMCrewPosto] = useState('Tripulante');
 
   // Edit mission
   const [editingMission, setEditingMission] = useState(null);
@@ -76,6 +84,9 @@ export default function NaveClient({ nave, headerColor }) {
   // Lightbox
   const [lightboxImg, setLightboxImg] = useState(null);
 
+  // Confirm delete
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
   const isCaptain = user?.logged && user.fichaSlug && crewData?.capitaoSlug === user.fichaSlug;
   const isAdmin = user?.logged && user.role === 'admin';
   const canManage = isCaptain || isAdmin;
@@ -89,10 +100,20 @@ export default function NaveClient({ nave, headerColor }) {
     fetch('/api/fichas')
       .then(r => r.json())
       .then(data => {
+        setAllFichas(data);
         setFichasAtivas(data.filter(f => f.divisao && !['Reserva', 'Baixa'].includes(f.divisao)));
       })
       .catch(() => {});
+
+    loadMissoes();
   }, [nave.slug]);
+
+  function loadMissoes() {
+    fetch(`/api/missoes?nave=${nave.slug}`)
+      .then(r => r.json())
+      .then(data => setMissoes(data))
+      .catch(() => {});
+  }
 
   // === Crew Functions ===
   async function addTripulante(e) {
@@ -152,36 +173,31 @@ export default function NaveClient({ nave, headerColor }) {
     if (res.ok) { setCrewData(prev => ({ ...prev, fotos: data.fotos })); }
   }
 
-  // === Mission Functions ===
+  // === Mission Functions (unified API) ===
   async function createMission(e) {
     e.preventDefault();
     setMissionMsg('');
     const fotos = mFotos.split('\n').map(l => normalizeImgurUrl(l.trim())).filter(Boolean);
-    const res = await fetch(`/api/naves/${nave.slug}/missoes`, {
+    const res = await fetch('/api/missoes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ titulo: mTitulo, data: mData, texto: mTexto, fotos }),
+      body: JSON.stringify({ naveSlug: nave.slug, titulo: mTitulo, data: mData, texto: mTexto, fotos, tripulantes: mSelectedCrew }),
     });
     const data = await res.json();
     if (res.ok) {
-      setCrewData(prev => ({ ...prev, missoes: [data.missao, ...(prev.missoes || [])] }));
-      setMTitulo(''); setMTexto(''); setMFotos(''); setShowMissionForm(false);
-      setMissionMsg('Missao registrada no diario de bordo!');
+      setMTitulo(''); setMTexto(''); setMFotos(''); setShowMissionForm(false); setMSelectedCrew([]);
+      setMissionMsg('Missao registrada!');
+      loadMissoes();
     } else { setMissionMsg(`Erro: ${data.error}`); }
   }
 
   async function deleteMission(missaoId) {
-    if (!confirm('Excluir esta entrada do diario de bordo?')) return;
-    const res = await fetch(`/api/naves/${nave.slug}/missoes`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ missaoId }),
-    });
-    const data = await res.json();
+    const res = await fetch(`/api/missoes/${missaoId}`, { method: 'DELETE' });
     if (res.ok) {
-      setCrewData(prev => ({ ...prev, missoes: data.missoes }));
-      setMissionMsg('Entrada removida.');
-    } else { alert(data.error); }
+      setConfirmDelete(null);
+      setMissionMsg('Missao removida.');
+      loadMissoes();
+    } else { const data = await res.json(); alert(data.error); }
   }
 
   function startEditMission(m) {
@@ -195,24 +211,30 @@ export default function NaveClient({ nave, headerColor }) {
 
   async function saveEditMission(e) {
     e.preventDefault();
-    const res = await fetch(`/api/naves/${nave.slug}/missoes`, {
+    const res = await fetch(`/api/missoes/${editingMission}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ missaoId: editingMission, titulo: editTitulo, data: editData, texto: editTexto, fotos: editFotos }),
+      body: JSON.stringify({ titulo: editTitulo, data: editData, texto: editTexto, fotos: editFotos }),
     });
-    const data = await res.json();
     if (res.ok) {
-      setCrewData(prev => ({
-        ...prev,
-        missoes: prev.missoes.map(m => m.id === editingMission ? data.missao : m),
-      }));
       setEditingMission(null);
-      setMissionMsg('Entrada atualizada!');
-    } else { alert(data.error); }
+      setMissionMsg('Missao atualizada!');
+      loadMissoes();
+    } else { const data = await res.json(); alert(data.error); }
   }
 
+  function toggleMCrewMember(ficha) {
+    const exists = mSelectedCrew.find(c => c.fichaSlug === ficha.slug);
+    if (exists) setMSelectedCrew(mSelectedCrew.filter(c => c.fichaSlug !== ficha.slug));
+    else setMSelectedCrew([...mSelectedCrew, { fichaSlug: ficha.slug, nome: ficha.nome, patente: ficha.patente, postoMissao: mCrewPosto }]);
+  }
+
+  const mFilteredFichas = allFichas.filter(f =>
+    f.nome?.toLowerCase().includes(mCrewSearch.toLowerCase()) ||
+    f.patente?.toLowerCase().includes(mCrewSearch.toLowerCase())
+  ).slice(0, 12);
+
   // === Helpers ===
-  const missoes = crewData?.missoes || [];
   const shipFotos = crewData?.fotos || [];
 
   function getFichaName(slug) {
@@ -545,17 +567,17 @@ export default function NaveClient({ nave, headerColor }) {
         </div>
       )}
 
-      {/* ===== DIÁRIO DE BORDO ===== */}
+      {/* ===== MISSÕES DA NAVE ===== */}
       <div className="lcars-panel">
         <div className="lcars-panel-header" style={{ background: headerColor }}>
-          Diarios de Missoes
+          Missoes da Nave
         </div>
         <div className="lcars-panel-body">
           {canManage && (
             <div style={{ marginBottom: '16px' }}>
               <button onClick={() => setShowMissionForm(!showMissionForm)}
                 className="lcars-btn orange" style={{ border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}>
-                {showMissionForm ? '✕ Cancelar' : '★ Nova Entrada no Diario'}
+                {showMissionForm ? '✕ Cancelar' : '★ Nova Missao'}
               </button>
             </div>
           )}
@@ -581,7 +603,7 @@ export default function NaveClient({ nave, headerColor }) {
               </div>
               <div className="lcars-form-group" style={{ marginBottom: '12px' }}>
                 <label>Registro do Comandante</label>
-                <textarea value={mTexto} onChange={e => setMTexto(e.target.value)} placeholder="Diario de bordo do Capitao..." rows={6} required style={{ resize: 'vertical' }} />
+                <textarea value={mTexto} onChange={e => setMTexto(e.target.value)} placeholder="Relatorio da missao..." rows={6} required style={{ resize: 'vertical' }} />
               </div>
               <div className="lcars-form-group" style={{ marginBottom: '12px' }}>
                 <label>Fotos da Missao (URLs Imgur, uma por linha)</label>
@@ -589,8 +611,47 @@ export default function NaveClient({ nave, headerColor }) {
                   placeholder={"https://i.imgur.com/foto1.jpg\nhttps://i.imgur.com/foto2.jpg"}
                   rows={3} style={{ resize: 'vertical', fontSize: '0.8rem' }} />
               </div>
+
+              {/* Tripulação da missão com posto */}
+              <div style={{ marginBottom: '12px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--lcars-radius-sm)', border: '1px solid #333' }}>
+                <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+                  Tripulacao da Missao ({mSelectedCrew.length})
+                </label>
+                {mSelectedCrew.length > 0 && (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                    {mSelectedCrew.map(c => (
+                      <span key={c.fichaSlug} className="lcars-badge" style={{
+                        background: 'var(--lcars-teal)', color: '#000', fontSize: '0.65rem', cursor: 'pointer'
+                      }} onClick={() => toggleMCrewMember({ slug: c.fichaSlug, nome: c.nome, patente: c.patente })}>
+                        {c.nome} ({c.postoMissao}) ✕
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                  <select value={mCrewPosto} onChange={e => setMCrewPosto(e.target.value)}
+                    style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.4)', border: '1px solid #555', borderRadius: '4px', color: 'var(--lcars-peach)', fontSize: '0.75rem', flex: '0 0 auto' }}>
+                    {POSTOS_MISSAO.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  <input placeholder="Buscar tripulante..." value={mCrewSearch} onChange={e => setMCrewSearch(e.target.value)}
+                    style={{ flex: 1, padding: '4px 8px', background: 'rgba(0,0,0,0.4)', border: '1px solid #555', borderRadius: '4px', color: 'var(--lcars-peach)', fontSize: '0.75rem', minWidth: '120px' }} />
+                </div>
+                {mCrewSearch && (
+                  <div style={{ maxHeight: '120px', overflow: 'auto', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
+                    {mFilteredFichas.map(f => (
+                      <div key={f.slug} onClick={() => toggleMCrewMember(f)}
+                        style={{ padding: '4px 8px', cursor: 'pointer', fontSize: '0.75rem',
+                          color: mSelectedCrew.find(c => c.fichaSlug === f.slug) ? 'var(--lcars-teal)' : 'var(--lcars-text-light)',
+                          borderBottom: '1px solid #222' }}>
+                        {mSelectedCrew.find(c => c.fichaSlug === f.slug) ? '✓ ' : ''}{f.patente} {f.nome}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <button type="submit" className="lcars-btn orange" style={{ border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}>
-                Registrar no Diario de Bordo
+                Registrar Missao
               </button>
             </form>
           )}
@@ -677,7 +738,7 @@ export default function NaveClient({ nave, headerColor }) {
                         <div>
                           <div style={{ color: 'var(--lcars-orange)', fontWeight: 600, fontSize: '0.95rem' }}>★ {m.titulo}</div>
                           <div style={{ color: 'var(--lcars-text-dim)', fontSize: '0.75rem', marginTop: '4px' }}>
-                            Data Estelar {m.data} — {m.diarios?.length || 0} diário(s) pessoal(is){m.fotos?.length > 0 ? ` — ${m.fotos.length} foto(s)` : ''}
+                            Data Estelar {m.data} — {(m.tripulantes || []).length} tripulante(s) — {(m.diarios || []).length} diario(s){(m.fotos || []).length > 0 ? ` — ${m.fotos.length} foto(s)` : ''}
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -685,7 +746,7 @@ export default function NaveClient({ nave, headerColor }) {
                             <>
                               <button onClick={() => startEditMission(m)} className="lcars-btn blue"
                                 style={{ fontSize: '0.6rem', padding: '3px 10px', border: 'none', cursor: 'pointer' }}>EDITAR</button>
-                              <button onClick={() => deleteMission(m.id)} className="lcars-btn red"
+                              <button onClick={() => setConfirmDelete(m.id)} className="lcars-btn red"
                                 style={{ fontSize: '0.6rem', padding: '3px 10px', border: 'none', cursor: 'pointer' }}>✕</button>
                             </>
                           )}
@@ -715,6 +776,25 @@ export default function NaveClient({ nave, headerColor }) {
           )}
         </div>
       </div>
+
+      {/* ===== CONFIRM DELETE MISSION ===== */}
+      {confirmDelete && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+        }}>
+          <div className="lcars-panel" style={{ maxWidth: '400px', borderColor: 'var(--lcars-red)' }}>
+            <div className="lcars-panel-header" style={{ background: 'var(--lcars-red)', color: '#fff' }}>CONFIRMAR EXCLUSAO</div>
+            <div className="lcars-panel-body" style={{ padding: '20px', textAlign: 'center' }}>
+              <p style={{ color: 'var(--lcars-text-light)', marginBottom: '16px' }}>Excluir esta missao? Esta acao nao pode ser desfeita.</p>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                <button onClick={() => deleteMission(confirmDelete)} className="lcars-btn" style={{ background: 'var(--lcars-red)', color: '#fff', fontSize: '0.8rem', padding: '8px 24px' }}>EXCLUIR</button>
+                <button onClick={() => setConfirmDelete(null)} className="lcars-btn" style={{ fontSize: '0.8rem', padding: '8px 24px' }}>CANCELAR</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ===== LIGHTBOX ===== */}
       {lightboxImg && (

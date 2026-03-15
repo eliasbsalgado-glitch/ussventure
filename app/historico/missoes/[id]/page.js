@@ -43,7 +43,12 @@ export default function MissaoDetailPage() {
   const [crewSearch, setCrewSearch] = useState('');
   const [editingCrew, setEditingCrew] = useState(false);
   const [selectedCrew, setSelectedCrew] = useState([]);
+  const [selectedCrewPosto, setSelectedCrewPosto] = useState('Tripulante');
   const [lightboxImg, setLightboxImg] = useState(null);
+  const [newFotoUrl, setNewFotoUrl] = useState('');
+  const [fotoMsg, setFotoMsg] = useState('');
+
+  const POSTOS_MISSAO = ['Piloto', 'Oficial de Ciencias/Comunicacoes', 'Oficial de Engenharia', 'Oficial Tatico', 'Tripulante'];
 
   useEffect(() => {
     fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'me' }) })
@@ -76,7 +81,17 @@ export default function MissaoDetailPage() {
   const tripulantes = missao?.tripulantes || [];
   const isParticipant = session?.fichaSlug && tripulantes.some(t => t.fichaSlug === session.fichaSlug);
   const canWrite = isAdmin || isParticipant;
-  const canManage = isAdmin;
+  // Captain of the ship can manage too
+  const [isCaptain, setIsCaptain] = useState(false);
+  useEffect(() => {
+    if (missao?.nave_slug && session?.fichaSlug) {
+      fetch(`/api/naves/${missao.nave_slug}`).then(r => r.json()).then(d => {
+        if (d.capitaoSlug === session.fichaSlug) setIsCaptain(true);
+      }).catch(() => {});
+    }
+  }, [missao?.nave_slug, session?.fichaSlug]);
+  const canManage = isAdmin || isCaptain;
+  const canAddPhoto = canManage || isParticipant;
 
   async function submitDiario(e) {
     e.preventDefault();
@@ -122,7 +137,35 @@ export default function MissaoDetailPage() {
   function toggleCrew(ficha) {
     const exists = selectedCrew.find(c => c.fichaSlug === ficha.slug);
     if (exists) setSelectedCrew(selectedCrew.filter(c => c.fichaSlug !== ficha.slug));
-    else setSelectedCrew([...selectedCrew, { fichaSlug: ficha.slug, nome: ficha.nome, patente: ficha.patente }]);
+    else setSelectedCrew([...selectedCrew, { fichaSlug: ficha.slug, nome: ficha.nome, patente: ficha.patente, postoMissao: selectedCrewPosto }]);
+  }
+
+  async function addMissionFoto(e) {
+    e.preventDefault();
+    if (!newFotoUrl.trim()) return;
+    setFotoMsg('');
+    const res = await fetch(`/api/missoes/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'addFoto', url: newFotoUrl.trim() }),
+    });
+    if (res.ok) {
+      setNewFotoUrl('');
+      setFotoMsg('Foto adicionada!');
+      loadMissao();
+    } else {
+      const data = await res.json();
+      setFotoMsg(`Erro: ${data.error}`);
+    }
+  }
+
+  async function removeMissionFoto(index) {
+    const res = await fetch(`/api/missoes/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'removeFoto', index }),
+    });
+    if (res.ok) loadMissao();
   }
 
   async function saveCrew() {
@@ -233,11 +276,17 @@ export default function MissaoDetailPage() {
                   <span key={c.fichaSlug} className="lcars-badge" style={{
                     background: 'var(--lcars-sky)', color: '#000', fontSize: '0.7rem', cursor: 'pointer'
                   }} onClick={() => toggleCrew({ slug: c.fichaSlug, nome: c.nome, patente: c.patente })}>
-                    {c.patente} {c.nome} ✕
+                    {c.nome} ({c.postoMissao || 'Tripulante'}) ✕
                   </span>
                 ))}
               </div>
             )}
+            <div style={{ marginBottom: '6px' }}>
+              <select value={selectedCrewPosto} onChange={e => setSelectedCrewPosto(e.target.value)}
+                style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.4)', border: '1px solid #555', borderRadius: '4px', color: 'var(--lcars-peach)', fontSize: '0.75rem' }}>
+                {POSTOS_MISSAO.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
             <input placeholder="Buscar tripulante..." value={crewSearch} onChange={e => setCrewSearch(e.target.value)}
               style={{ background: '#000', color: '#fff', border: '1px solid #444', padding: '6px 8px', borderRadius: '4px', width: '100%', fontSize: '0.8rem', marginBottom: '6px' }} />
             {crewSearch && (
@@ -282,27 +331,68 @@ export default function MissaoDetailPage() {
       </div>
 
       {/* Fotos da Missão */}
-      {fotos.length > 0 && (
-        <div className="lcars-panel">
-          <div className="lcars-panel-header blue">Registros Visuais da Missao</div>
-          <div className="lcars-panel-body">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+      <div className="lcars-panel">
+        <div className="lcars-panel-header blue">Registros Visuais da Missao ({fotos.length})</div>
+        <div className="lcars-panel-body">
+          {fotos.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px', marginBottom: canAddPhoto ? '16px' : 0 }}>
               {fotos.map((url, i) => (
-                <img key={i} src={url} alt={`Registro visual ${i + 1}`}
-                  onClick={() => setLightboxImg(url)}
-                  style={{
-                    width: '100%', height: '180px', objectFit: 'cover',
-                    borderRadius: 'var(--lcars-radius-sm)', border: '1px solid var(--lcars-blue)',
-                    cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s',
-                  }}
-                  onMouseEnter={e => { e.target.style.transform = 'scale(1.03)'; e.target.style.boxShadow = '0 0 15px var(--lcars-blue)'; }}
-                  onMouseLeave={e => { e.target.style.transform = 'scale(1)'; e.target.style.boxShadow = 'none'; }}
-                />
+                <div key={i} style={{ position: 'relative' }}>
+                  <img src={url} alt={`Registro visual ${i + 1}`}
+                    onClick={() => setLightboxImg(url)}
+                    style={{
+                      width: '100%', height: '180px', objectFit: 'cover',
+                      borderRadius: 'var(--lcars-radius-sm)', border: '1px solid var(--lcars-blue)',
+                      cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={e => { e.target.style.transform = 'scale(1.03)'; e.target.style.boxShadow = '0 0 15px var(--lcars-blue)'; }}
+                    onMouseLeave={e => { e.target.style.transform = 'scale(1)'; e.target.style.boxShadow = 'none'; }}
+                  />
+                  {canManage && (
+                    <button onClick={() => removeMissionFoto(i)} style={{
+                      position: 'absolute', top: '6px', right: '6px',
+                      background: 'rgba(204,68,68,0.9)', border: 'none',
+                      color: '#fff', borderRadius: '50%', width: '22px', height: '22px',
+                      fontSize: '0.6rem', cursor: 'pointer', lineHeight: '22px', textAlign: 'center',
+                    }}>✕</button>
+                  )}
+                </div>
               ))}
             </div>
-          </div>
+          )}
+          {fotos.length === 0 && !canAddPhoto && (
+            <div style={{ textAlign: 'center', padding: '16px', color: 'var(--lcars-text-dim)', fontSize: '0.85rem' }}>
+              Nenhum registro visual desta missao.
+            </div>
+          )}
+          {/* Adicionar foto — participantes e admin/capitão */}
+          {canAddPhoto && (
+            <form onSubmit={addMissionFoto} style={{
+              padding: '10px', background: 'rgba(0,0,0,0.2)',
+              borderRadius: 'var(--lcars-radius-sm)', border: '1px solid #333',
+            }}>
+              <div style={{ fontSize: '0.65rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>
+                Adicionar Foto da Missao (Link direto Imgur)
+              </div>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <input type="url" value={newFotoUrl} onChange={e => setNewFotoUrl(e.target.value)}
+                  placeholder="https://i.imgur.com/exemplo.jpg" required
+                  style={{
+                    flex: 1, padding: '6px 10px', background: 'rgba(0,0,0,0.4)',
+                    border: '1px solid #555', borderRadius: 'var(--lcars-radius-sm)',
+                    color: 'var(--lcars-peach)', fontSize: '0.75rem',
+                  }} />
+                <button type="submit" className="lcars-btn blue" style={{ fontSize: '0.65rem', padding: '5px 12px', border: 'none', cursor: 'pointer' }}>
+                  + Foto
+                </button>
+              </div>
+              {fotoMsg && (
+                <div style={{ marginTop: '6px', fontSize: '0.75rem', color: fotoMsg.includes('Erro') ? 'var(--lcars-red)' : 'var(--lcars-teal)' }}>{fotoMsg}</div>
+              )}
+            </form>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Tripulação participante */}
       <div className="lcars-panel">
@@ -348,9 +438,16 @@ export default function MissaoDetailPage() {
                         </div>
                         <div>
                           <div style={{ color: 'var(--lcars-text-light)', fontWeight: 700, fontSize: '0.85rem' }}>{nome}</div>
-                          <span className="lcars-badge" style={{ background: 'var(--lcars-teal)', color: '#000', fontSize: '0.6rem' }}>
-                            {patente}
-                          </span>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
+                            <span className="lcars-badge" style={{ background: 'var(--lcars-teal)', color: '#000', fontSize: '0.55rem' }}>
+                              {patente}
+                            </span>
+                            {t.postoMissao && (
+                              <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.55rem' }}>
+                                {t.postoMissao}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
