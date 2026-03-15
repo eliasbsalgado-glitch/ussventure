@@ -29,16 +29,17 @@ CRITICAL FORMATTING RULES:
 9. When talking about time of service, calculate from the admission date to today.
 10. LINKS: When the user asks for a link, URL, site, fonte, pagina or endereco, include the relevant URL directly in your response. URLs provided in [DADOS DA FROTA] context start with https://frotaventure.vercel.app/. Do NOT invent URLs.
 11. When the user does NOT ask for links, do NOT include any URLs in your answer.
-12. ONLY use data provided in [DADOS DA FROTA]. If data is not provided there, say you do not have it. Do NOT invent diary names, mission details, dates or any other information.`;
+12. ONLY use data provided in [DADOS DA FROTA]. If data is not provided there, say you do not have it. Do NOT invent diary names, mission details, dates or any other information.
+13. AGENDA/MISSOES: When asked about missions, agenda, events, or schedule, report the events from [PROXIMOS EVENTOS]. Include dates, titles, divisions and descriptions. If no events are found, say there are no scheduled events.`;
 
 // Keywords para deteccao de intencao
 const KEYWORDS = {
   self: ['minha', 'meu', 'meus', 'minhas', 'eu', 'sobre mim', 'minha ficha', 'minha patente', 'minha divisao', 'meu historico', 'minha carreira', 'tempo de servico'],
   crew: ['quem e', 'quem eh', 'ficha do', 'ficha da', 'ficha de', 'sobre o', 'sobre a', 'tripulante', 'oficial'],
-  nave: ['nave', 'naves', 'adventure', 'altotting', 'andor', 'nautilus', 'rerum', 'serenity', 'suidara', 'ncc', 'missao', 'missoes'],
+  nave: ['nave', 'naves', 'adventure', 'altotting', 'andor', 'nautilus', 'rerum', 'serenity', 'suidara', 'ncc'],
   divisao: ['divisao', 'divisoes', 'comando', 'academia', 'ciencias', 'comunicacoes', 'engenharia', 'operacoes', 'tatico', 'civil', 'reserva'],
   diario: ['diario', 'diarios', 'registro', 'registros', 'log', 'anotacao', 'anotacoes'],
-  agenda: ['agenda', 'evento', 'eventos', 'proximo evento', 'proximos eventos'],
+  agenda: ['agenda', 'evento', 'eventos', 'proximo evento', 'proximos eventos', 'missao', 'missoes', 'programacao', 'calendario'],
   patente: ['patente', 'patentes', 'hierarquia', 'ranking', 'rank', 'almirante', 'vice-almirante', 'comodoro', 'capitao', 'comandante', 'tenente', 'alferes', 'cadete', 'recruta'],
   historia: ['historia', 'historico', 'conto', 'contos', 'cronicas', 'cronica'],
   carreira: ['carreira', 'timeline', 'promocao', 'promocoes', 'condecoracoes', 'condecoracao', 'medalha', 'medalhas'],
@@ -304,11 +305,11 @@ async function buildContext(speakerName, message, ctxFollow) {
   if (intents.includes('agenda')) {
     const today = new Date().toISOString().split('T')[0];
     const eventos = await sql`
-      SELECT titulo, data, divisao_nome FROM agenda_eventos
+      SELECT titulo, data, divisao_nome, texto FROM agenda_eventos
       WHERE data >= ${today} ORDER BY data LIMIT 5
     `;
     if (eventos.length > 0) {
-      context += `[PROXIMOS EVENTOS] ${eventos.map(e => `${e.data}: ${e.titulo} (${e.divisao_nome})`).join('; ')}. `;
+      context += `[PROXIMOS EVENTOS] ${eventos.map(e => `${e.data}: ${e.titulo} (${e.divisao_nome})${e.texto ? ' - ' + e.texto : ''}`).join('; ')}. `;
     } else {
       context += `[AGENDA] Nenhum evento futuro registrado. `;
     }
