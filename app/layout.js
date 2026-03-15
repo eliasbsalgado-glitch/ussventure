@@ -6,6 +6,7 @@
 import './lcars.css';
 import LCARSLayout from '@/components/LCARSLayout';
 import { AuthProvider } from '@/components/AuthContext';
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 export const metadata = {
   title: 'Frota Venture SL',
@@ -21,36 +22,21 @@ export const metadata = {
     icon: '/icons/icon-512x512.png',
     apple: '/icons/icon-192x192.png',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
+  other: {
+    'mobile-web-app-capable': 'yes',
   },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
-      <head>
-        <meta name="mobile-web-app-capable" content="yes" />
-      </head>
       <body>
         <AuthProvider>
           <LCARSLayout>
             {children}
           </LCARSLayout>
         </AuthProvider>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
-                });
-              }
-            `,
-          }}
-        />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
