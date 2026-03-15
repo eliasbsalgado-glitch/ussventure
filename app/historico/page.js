@@ -148,6 +148,26 @@ export default function HistoricoPage() {
           </div>
         </Link>
 
+        <Link href="/historico/missoes" style={{ textDecoration: 'none' }}>
+          <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-green)', cursor: 'pointer', overflow: 'hidden' }}>
+            <div style={{ padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--lcars-green)' }}>
+                Log de Missoes
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
+                Registro de todas as missoes realizadas pela esquadra
+              </div>
+            </div>
+            <div className="lcars-card-body" style={{ padding: '12px 16px' }}>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-green)', color: '#000', fontSize: '0.65rem' }}>Missoes</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-orange)', color: '#000', fontSize: '0.65rem' }}>Diarios</span>
+                <span className="lcars-badge" style={{ background: 'var(--lcars-sky)', color: '#000', fontSize: '0.65rem' }}>Tripulacao</span>
+              </div>
+            </div>
+          </div>
+        </Link>
+
         <Link href="/historico/cronicas" style={{ textDecoration: 'none' }}>
           <div className="lcars-card lcars-card-hover" style={{ borderColor: 'var(--lcars-orange)', cursor: 'pointer', overflow: 'hidden' }}>
             <div style={{ padding: '20px', background: 'rgba(0,0,0,0.4)' }}>

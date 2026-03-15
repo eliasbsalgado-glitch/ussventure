@@ -50,6 +50,22 @@ CREATE TABLE IF NOT EXISTS naves_crew (
   fotos JSONB DEFAULT '[]'
 );
 
+-- Missoes da frota (cada nave)
+CREATE TABLE IF NOT EXISTS missoes (
+  id TEXT PRIMARY KEY,
+  nave_slug TEXT NOT NULL,
+  titulo TEXT NOT NULL,
+  data TEXT NOT NULL,
+  texto TEXT DEFAULT '',
+  autor_slug TEXT DEFAULT '',
+  tripulantes JSONB DEFAULT '[]',
+  diarios JSONB DEFAULT '[]',
+  fotos JSONB DEFAULT '[]',
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indice para busca rapida por nome (para endpoint SL)
 CREATE INDEX IF NOT EXISTS idx_fichas_nome_lower ON fichas (LOWER(nome));
 CREATE INDEX IF NOT EXISTS idx_fichas_divisao ON fichas (divisao);
+CREATE INDEX IF NOT EXISTS idx_missoes_nave ON missoes (nave_slug);
+CREATE INDEX IF NOT EXISTS idx_missoes_data ON missoes (data DESC);
