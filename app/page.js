@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { getFichaStats, getDivisoes, getNaves } from '@/lib/data';
 import AgendaHome from '@/components/AgendaHome';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const stats = await getFichaStats();
   const divisoes = await getDivisoes();
