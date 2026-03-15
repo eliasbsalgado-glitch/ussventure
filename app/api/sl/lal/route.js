@@ -26,7 +26,10 @@ CRITICAL FORMATTING RULES:
 6. ANTI-HALLUCINATION: NEVER invent names, ranks, ship commanders or any data. If you do not have data, say "Nao possuo esses dados em meus registros."
 7. SPEAKER ACKNOWLEDGMENT: Address the speaker by their Rank and Name.
 8. When listing career events, summarize the most important ones, do not list everything.
-9. When talking about time of service, calculate from the admission date to today.`;
+9. When talking about time of service, calculate from the admission date to today.
+10. LINKS: When the user asks for a link, URL, site, fonte, pagina or endereco, include the relevant URL directly in your response. URLs provided in [DADOS DA FROTA] context start with https://frotaventure.vercel.app/. Do NOT invent URLs.
+11. When the user does NOT ask for links, do NOT include any URLs in your answer.
+12. ONLY use data provided in [DADOS DA FROTA]. If data is not provided there, say you do not have it. Do NOT invent diary names, mission details, dates or any other information.`;
 
 // Keywords para deteccao de intencao
 const KEYWORDS = {
