@@ -8,7 +8,7 @@ import LCARSLayout from '@/components/LCARSLayout';
 import { AuthProvider } from '@/components/AuthContext';
 
 export const metadata = {
-  title: 'USS Venture NCC 71854 — Frota Venture SL',
+  title: 'Frota Venture SL',
   description: 'Sistema LCARS da Frota Venture — Grupo brasileiro de roleplay Star Trek no Second Life.',
 };
 

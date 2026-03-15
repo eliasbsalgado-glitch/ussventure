@@ -19,7 +19,7 @@ export default function HomePage() {
     <div>
       {/* Hero Section */}
       <div className="lcars-hero">
-        <h1>USS Venture NCC 71854</h1>
+        <h1>FROTA VENTURE</h1>
         <div className="subtitle">Sistema de Computador Central — Starbase 245</div>
       </div>
 
