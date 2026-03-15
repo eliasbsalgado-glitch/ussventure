@@ -40,7 +40,7 @@ function normalizeImgurUrl(url) {
   return u;
 }
 
-const POSTOS_MISSAO = ['Piloto', 'Oficial de Ciencias/Comunicacoes', 'Oficial de Engenharia', 'Oficial Tatico', 'Tripulante'];
+const POSTOS_MISSAO = ['Capitao', 'Piloto', 'Oficial de Ciencias/Comunicacoes', 'Oficial de Engenharia', 'Oficial Tatico', 'Tripulante', 'Outro (digitar)'];
 
 export default function NaveClient({ nave, headerColor }) {
   const { user } = useAuth();
@@ -68,6 +68,7 @@ export default function NaveClient({ nave, headerColor }) {
   const [mCrewSearch, setMCrewSearch] = useState('');
   const [mSelectedCrew, setMSelectedCrew] = useState([]);
   const [mCrewPosto, setMCrewPosto] = useState('Tripulante');
+  const [mCrewPostoCustom, setMCrewPostoCustom] = useState('');
 
   // Edit mission
   const [editingMission, setEditingMission] = useState(null);
@@ -226,7 +227,10 @@ export default function NaveClient({ nave, headerColor }) {
   function toggleMCrewMember(ficha) {
     const exists = mSelectedCrew.find(c => c.fichaSlug === ficha.slug);
     if (exists) setMSelectedCrew(mSelectedCrew.filter(c => c.fichaSlug !== ficha.slug));
-    else setMSelectedCrew([...mSelectedCrew, { fichaSlug: ficha.slug, nome: ficha.nome, patente: ficha.patente, postoMissao: mCrewPosto }]);
+    else {
+      const posto = mCrewPosto === 'Outro (digitar)' ? (mCrewPostoCustom || 'Tripulante') : mCrewPosto;
+      setMSelectedCrew([...mSelectedCrew, { fichaSlug: ficha.slug, nome: ficha.nome, patente: ficha.patente, postoMissao: posto }]);
+    }
   }
 
   const mFilteredFichas = allFichas.filter(f =>
@@ -633,6 +637,10 @@ export default function NaveClient({ nave, headerColor }) {
                     style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.4)', border: '1px solid #555', borderRadius: '4px', color: 'var(--lcars-peach)', fontSize: '0.75rem', flex: '0 0 auto' }}>
                     {POSTOS_MISSAO.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
+                  {mCrewPosto === 'Outro (digitar)' && (
+                    <input placeholder="Digite o posto..." value={mCrewPostoCustom} onChange={e => setMCrewPostoCustom(e.target.value)}
+                      style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--lcars-orange)', borderRadius: '4px', color: 'var(--lcars-orange)', fontSize: '0.75rem', width: '140px' }} />
+                  )}
                   <input placeholder="Buscar tripulante..." value={mCrewSearch} onChange={e => setMCrewSearch(e.target.value)}
                     style={{ flex: 1, padding: '4px 8px', background: 'rgba(0,0,0,0.4)', border: '1px solid #555', borderRadius: '4px', color: 'var(--lcars-peach)', fontSize: '0.75rem', minWidth: '120px' }} />
                 </div>

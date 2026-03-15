@@ -48,7 +48,8 @@ export default function MissaoDetailPage() {
   const [newFotoUrl, setNewFotoUrl] = useState('');
   const [fotoMsg, setFotoMsg] = useState('');
 
-  const POSTOS_MISSAO = ['Piloto', 'Oficial de Ciencias/Comunicacoes', 'Oficial de Engenharia', 'Oficial Tatico', 'Tripulante'];
+  const POSTOS_MISSAO = ['Capitao', 'Piloto', 'Oficial de Ciencias/Comunicacoes', 'Oficial de Engenharia', 'Oficial Tatico', 'Tripulante', 'Outro (digitar)'];
+  const [customPosto, setCustomPosto] = useState('');
 
   useEffect(() => {
     fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'me' }) })
@@ -137,7 +138,10 @@ export default function MissaoDetailPage() {
   function toggleCrew(ficha) {
     const exists = selectedCrew.find(c => c.fichaSlug === ficha.slug);
     if (exists) setSelectedCrew(selectedCrew.filter(c => c.fichaSlug !== ficha.slug));
-    else setSelectedCrew([...selectedCrew, { fichaSlug: ficha.slug, nome: ficha.nome, patente: ficha.patente, postoMissao: selectedCrewPosto }]);
+    else {
+      const posto = selectedCrewPosto === 'Outro (digitar)' ? (customPosto || 'Tripulante') : selectedCrewPosto;
+      setSelectedCrew([...selectedCrew, { fichaSlug: ficha.slug, nome: ficha.nome, patente: ficha.patente, postoMissao: posto }]);
+    }
   }
 
   async function addMissionFoto(e) {
@@ -281,11 +285,15 @@ export default function MissaoDetailPage() {
                 ))}
               </div>
             )}
-            <div style={{ marginBottom: '6px' }}>
+            <div style={{ marginBottom: '6px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
               <select value={selectedCrewPosto} onChange={e => setSelectedCrewPosto(e.target.value)}
                 style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.4)', border: '1px solid #555', borderRadius: '4px', color: 'var(--lcars-peach)', fontSize: '0.75rem' }}>
                 {POSTOS_MISSAO.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
+              {selectedCrewPosto === 'Outro (digitar)' && (
+                <input placeholder="Digite o posto..." value={customPosto} onChange={e => setCustomPosto(e.target.value)}
+                  style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--lcars-orange)', borderRadius: '4px', color: 'var(--lcars-orange)', fontSize: '0.75rem', width: '140px' }} />
+              )}
             </div>
             <input placeholder="Buscar tripulante..." value={crewSearch} onChange={e => setCrewSearch(e.target.value)}
               style={{ background: '#000', color: '#fff', border: '1px solid #444', padding: '6px 8px', borderRadius: '4px', width: '100%', fontSize: '0.8rem', marginBottom: '6px' }} />
