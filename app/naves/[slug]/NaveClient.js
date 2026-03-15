@@ -689,7 +689,7 @@ export default function NaveClient({ nave, headerColor }) {
                                 style={{ fontSize: '0.6rem', padding: '3px 10px', border: 'none', cursor: 'pointer' }}>✕</button>
                             </>
                           )}
-                          <Link href={`/naves/${nave.slug}/missao/${m.id}`} style={{ textDecoration: 'none' }}>
+                          <Link href={`/historico/missoes/${m.id}`} style={{ textDecoration: 'none' }}>
                             <span className="lcars-badge" style={{ background: headerColor, color: '#000', fontSize: '0.6rem', cursor: 'pointer' }}>ACESSAR →</span>
                           </Link>
                         </div>
