@@ -35,13 +35,14 @@ CRITICAL FORMATTING RULES:
 const KEYWORDS = {
   self: ['minha', 'meu', 'meus', 'minhas', 'eu', 'sobre mim', 'minha ficha', 'minha patente', 'minha divisao', 'meu historico', 'minha carreira', 'tempo de servico'],
   crew: ['quem e', 'quem eh', 'ficha do', 'ficha da', 'ficha de', 'sobre o', 'sobre a', 'tripulante', 'oficial'],
-  nave: ['nave', 'naves', 'adventure', 'altotting', 'andor', 'nautilus', 'rerum', 'serenity', 'suidara', 'ncc'],
+  nave: ['nave', 'naves', 'adventure', 'altotting', 'andor', 'nautilus', 'rerum', 'serenity', 'suidara', 'ncc', 'missao', 'missoes'],
   divisao: ['divisao', 'divisoes', 'comando', 'academia', 'ciencias', 'comunicacoes', 'engenharia', 'operacoes', 'tatico', 'civil', 'reserva'],
   diario: ['diario', 'diarios', 'registro', 'registros', 'log', 'anotacao', 'anotacoes'],
   agenda: ['agenda', 'evento', 'eventos', 'proximo evento', 'proximos eventos'],
-  patente: ['patente', 'patentes', 'hierarquia', 'ranking', 'rank'],
-  historia: ['historia', 'historico', 'conto', 'contos', 'cronicas', 'cronica', 'missao', 'missoes'],
+  patente: ['patente', 'patentes', 'hierarquia', 'ranking', 'rank', 'almirante', 'vice-almirante', 'comodoro', 'capitao', 'comandante', 'tenente', 'alferes', 'cadete', 'recruta'],
+  historia: ['historia', 'historico', 'conto', 'contos', 'cronicas', 'cronica'],
   carreira: ['carreira', 'timeline', 'promocao', 'promocoes', 'condecoracoes', 'condecoracao', 'medalha', 'medalhas'],
+  listar: ['liste', 'listar', 'quais sao', 'quais os', 'quais as', 'quem sao'],
 };
 
 function detectIntent(msg) {
@@ -239,7 +240,7 @@ async function buildContext(speakerName, message, ctxFollow) {
     }
   }
 
-  // 4. Informacao de nave
+  // 4. Informacao de nave + missoes
   if (intents.includes('nave')) {
     const naveSlug = extractNaveSlug(message);
     if (naveSlug) {
@@ -247,12 +248,20 @@ async function buildContext(speakerName, message, ctxFollow) {
       if (nave) {
         context += `[NAVE] ${nave.nome}, Classe: ${nave.classe}, Comissionada: ${nave.comissao}, Comandante: ${nave.comandante}, Status: ${nave.status}, Tipo: ${nave.tipo}. ${nave.lema ? 'Lema: ' + nave.lema : ''}. `;
         links.push(`${SITE_URL}/naves/${naveSlug}`);
-        // Buscar crew do banco
-        const crewRows = await sql`SELECT tripulantes FROM naves_crew WHERE nave_slug = ${naveSlug}`;
-        if (crewRows.length > 0 && crewRows[0].tripulantes) {
-          const trips = crewRows[0].tripulantes;
+        // Buscar crew e missoes do banco
+        const crewRows = await sql`SELECT tripulantes, missoes FROM naves_crew WHERE nave_slug = ${naveSlug}`;
+        if (crewRows.length > 0) {
+          const trips = crewRows[0].tripulantes || [];
           if (trips.length > 0) {
             context += `Tripulacao: ${trips.map(t => `${t.posto}: ${t.fichaSlug}`).join(', ')}. `;
+          }
+          // Missoes da nave
+          const missoes = crewRows[0].missoes || [];
+          if (missoes.length > 0) {
+            const recentMissoes = [...missoes].sort((a, b) => new Date(b.data || 0) - new Date(a.data || 0)).slice(0, 5);
+            context += `[MISSOES DA ${nave.nome.toUpperCase()}] ${recentMissoes.map(m => `${m.data || 'S/D'}: ${m.titulo || m.nome || 'Missao'} - ${(m.descricao || '').substring(0, 80)}`).join('; ')}. `;
+          } else {
+            context += `[MISSOES] Nenhuma missao registrada para esta nave. `;
           }
         }
       }
@@ -265,16 +274,21 @@ async function buildContext(speakerName, message, ctxFollow) {
     }
   }
 
-  // 5. Informacao de divisao
+  // 5. Informacao de divisao + listar oficiais
   if (intents.includes('divisao')) {
     const divSlug = extractDivisaoSlug(message);
     if (divSlug) {
-      const countRows = await sql`
-        SELECT COUNT(*)::int as qtd FROM fichas
+      const divMembers = await sql`
+        SELECT nome, patente FROM fichas
         WHERE LOWER(TRANSLATE(divisao, 'áàãâéêíóôõúüçÁÀÃÂÉÊÍÓÔÕÚÜÇ', 'aaaaeeiooouucaaaaeeiooouuc')) = ${divSlug}
+        ORDER BY nome LIMIT 20
       `;
-      const qtd = countRows[0]?.qtd || 0;
+      const qtd = divMembers.length;
       context += `[DIVISAO] ${divSlug}: ${qtd} tripulantes registrados. `;
+      // Se pediu pra listar, incluir nomes
+      if (intents.includes('listar') || intents.includes('crew')) {
+        context += `Oficiais: ${divMembers.map(m => `${m.patente} ${m.nome}`).join(', ')}. `;
+      }
       links.push(`${SITE_URL}/divisoes/${divSlug}`);
     } else {
       const divCounts = await sql`
@@ -301,10 +315,40 @@ async function buildContext(speakerName, message, ctxFollow) {
     links.push(SITE_URL);
   }
 
-  // 7. Patentes
-  if (intents.includes('patente') && !intents.includes('self') && !intents.includes('crew')) {
-    context += `[PATENTES] Hierarquia: 1-Almirante, 2-Vice-Almirante, 3-Comodoro, 4-Capitao, 5-Comandante, 6-Tenente Comandante, 7-Tenente, 8-Tenente Junior, 9-Alferes, 10-Cadete, 11-Tripulante C2, 12-Tripulante C3, 13-Recruta. `;
-    links.push(`${SITE_URL}/patentes`);
+  // 7. Patentes + buscar por patente
+  if (intents.includes('patente')) {
+    if (intents.includes('self')) {
+      // Ja tratado na secao 2
+    } else if (intents.includes('listar') || intents.includes('crew')) {
+      // Buscar oficiais com determinada patente
+      const patenteMap = {
+        'almirante': 'Almirante', 'vice-almirante': 'Vice-Almirante', 'comodoro': 'Comodoro',
+        'capitao': 'Capitão', 'comandante': 'Comandante', 'tenente comandante': 'Tenente Comandante',
+        'tenente': 'Tenente', 'tenente junior': 'Tenente Junior', 'alferes': 'Alferes',
+        'cadete': 'Cadete', 'recruta': 'Recruta',
+      };
+      const lower = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      let targetRank = null;
+      for (const [key, val] of Object.entries(patenteMap)) {
+        if (lower.includes(key)) { targetRank = val; break; }
+      }
+      if (targetRank) {
+        const rankMembers = await sql`
+          SELECT nome, divisao FROM fichas WHERE patente = ${targetRank} ORDER BY nome LIMIT 15
+        `;
+        if (rankMembers.length > 0) {
+          context += `[PATENTE ${targetRank.toUpperCase()}] ${rankMembers.length} oficiais: ${rankMembers.map(m => `${m.nome} (${m.divisao})`).join(', ')}. `;
+        } else {
+          context += `[PATENTE] Nenhum oficial com patente ${targetRank}. `;
+        }
+      } else {
+        context += `[PATENTES] Hierarquia: 1-Almirante, 2-Vice-Almirante, 3-Comodoro, 4-Capitao, 5-Comandante, 6-Tenente Comandante, 7-Tenente, 8-Tenente Junior, 9-Alferes, 10-Cadete, 11-Tripulante C2, 12-Tripulante C3, 13-Recruta. `;
+      }
+      links.push(`${SITE_URL}/patentes`);
+    } else {
+      context += `[PATENTES] Hierarquia: 1-Almirante, 2-Vice-Almirante, 3-Comodoro, 4-Capitao, 5-Comandante, 6-Tenente Comandante, 7-Tenente, 8-Tenente Junior, 9-Alferes, 10-Cadete, 11-Tripulante C2, 12-Tripulante C3, 13-Recruta. `;
+      links.push(`${SITE_URL}/patentes`);
+    }
   }
 
   // 8. Contos/historia
