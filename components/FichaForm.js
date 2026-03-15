@@ -193,11 +193,14 @@ export default function FichaForm({ initial, isEdit }) {
                       setUploading(true);
                       const fd = new FormData();
                       fd.append('file', file);
+                      // Enviar URL antiga para substituicao (deleta blob anterior)
+                      if (form.foto) fd.append('oldUrl', form.foto);
                       try {
                         const res = await fetch('/api/upload', { method: 'POST', body: fd });
                         const data = await res.json();
                         if (data.url) set('foto', data.url);
-                      } catch { alert('Erro no upload'); }
+                        else alert(data.error || 'Erro no upload');
+                      } catch { alert('Erro no upload da imagem'); }
                       setUploading(false);
                     }}
                   />
