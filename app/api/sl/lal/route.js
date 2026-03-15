@@ -117,17 +117,62 @@ async function findFichaByName(name) {
   return rows.length > 0 ? rows[0] : null;
 }
 
-function formatTempoServico(admissao) {
+function formatTempoServico(admissao, timeline) {
   if (!admissao) return 'desconhecido';
-  const d = new Date(admissao);
+  const admDate = new Date(admissao);
   const now = new Date();
-  const years = now.getFullYear() - d.getFullYear();
-  const months = now.getMonth() - d.getMonth();
-  const totalMonths = years * 12 + months;
-  if (totalMonths < 12) return `${totalMonths} meses`;
-  const y = Math.floor(totalMonths / 12);
-  const m = totalMonths % 12;
-  return m > 0 ? `${y} anos e ${m} meses` : `${y} anos`;
+  const totalMs = now - admDate;
+  const totalYears = totalMs / (1000 * 60 * 60 * 24 * 365.25);
+
+  // Calcular tempo em reserva analisando a timeline
+  let reservaMs = 0;
+  let enteredReserva = null;
+
+  if (timeline && Array.isArray(timeline)) {
+    const sorted = [...timeline].sort((a, b) => new Date(a.data) - new Date(b.data));
+    for (const evt of sorted) {
+      const ev = (evt.evento || '').toLowerCase();
+      const evDate = new Date(evt.data);
+
+      // Entrou na reserva
+      if (!enteredReserva && (
+        ev.includes('designado para a divisao reserva') ||
+        ev.includes('designado para a divisão reserva') ||
+        ev.includes('transferencia para reserva') ||
+        ev.includes('transferência para reserva')
+      )) {
+        enteredReserva = evDate;
+      }
+      // Saiu da reserva (designado para outra divisao)
+      else if (enteredReserva && (
+        (ev.includes('designado para a divisao') || ev.includes('designado para a divisão')) &&
+        !ev.includes('reserva')
+      ) || ev.includes('transferencia de reserva') || ev.includes('transferência de reserva')) {
+        reservaMs += evDate - enteredReserva;
+        enteredReserva = null;
+      }
+    }
+    // Se ainda esta na reserva, contar ate hoje
+    if (enteredReserva) {
+      reservaMs += now - enteredReserva;
+    }
+  }
+
+  const reservaYears = reservaMs / (1000 * 60 * 60 * 24 * 365.25);
+  const activeYears = Math.max(0, totalYears - reservaYears);
+
+  const activeY = Math.floor(activeYears);
+  const activeM = Math.round((activeYears - activeY) * 12);
+
+  if (reservaYears > 0.5) {
+    const totalR = totalYears.toFixed(1);
+    const resR = reservaYears.toFixed(1);
+    const activeStr = activeM > 0 ? `${activeY} anos e ${activeM} meses` : `${activeY} anos`;
+    return `${activeStr} de servico ativo (Total: ${totalR} anos - Reserva: ${resR} anos descontados)`;
+  }
+
+  if (activeY < 1) return `${activeM} meses`;
+  return activeM > 0 ? `${activeY} anos e ${activeM} meses` : `${activeY} anos`;
 }
 
 function formatTimeline(timeline, limit = 5) {
@@ -146,7 +191,7 @@ async function buildContext(speakerName, message, ctxFollow) {
   // 1. Dados do speaker (sempre)
   const speaker = await findFichaByName(speakerName);
   if (speaker) {
-    const tempo = formatTempoServico(speaker.admissao);
+    const tempo = formatTempoServico(speaker.admissao, speaker.timeline);
     context += `[SPEAKER] ${speaker.nome}, ${speaker.patente || 'N/A'}, Divisao ${speaker.divisao || 'N/A'}, Tempo de servico: ${tempo}. `;
     links.push(`${SITE_URL}/tripulacao/${speaker.slug}`);
   } else {
@@ -157,7 +202,7 @@ async function buildContext(speakerName, message, ctxFollow) {
   if (intents.includes('self') && speaker) {
     const condes = speaker.condecoracoes || [];
     const timeline = speaker.timeline || [];
-    context += `[FICHA COMPLETA] Nome: ${speaker.nome}, Patente: ${speaker.patente}, Divisao: ${speaker.divisao}, Departamento: ${speaker.departamento || 'N/A'}, Raca: ${speaker.raca || 'N/A'}, Cidade: ${speaker.cidade || 'N/A'}, Admissao: ${speaker.admissao}, Tempo de servico: ${formatTempoServico(speaker.admissao)}. `;
+    context += `[FICHA COMPLETA] Nome: ${speaker.nome}, Patente: ${speaker.patente}, Divisao: ${speaker.divisao}, Departamento: ${speaker.departamento || 'N/A'}, Raca: ${speaker.raca || 'N/A'}, Cidade: ${speaker.cidade || 'N/A'}, Admissao: ${speaker.admissao}, Tempo de servico: ${formatTempoServico(speaker.admissao, timeline)}. `;
     if (condes.length > 0) context += `Condecoracoes: ${condes.join(', ')}. `;
     if (intents.includes('carreira') && timeline.length > 0) {
       context += `Carreira recente: ${formatTimeline(timeline, 8)}. `;
@@ -176,7 +221,7 @@ async function buildContext(speakerName, message, ctxFollow) {
   if (citedName && !intents.includes('self')) {
     const cited = await findFichaByName(citedName);
     if (cited) {
-      context += `[CITADO] ${cited.nome}, ${cited.patente || 'N/A'}, Divisao ${cited.divisao || 'N/A'}, Raca: ${cited.raca || 'N/A'}, Admissao: ${cited.admissao || 'N/A'}, Tempo de servico: ${formatTempoServico(cited.admissao)}. `;
+      context += `[CITADO] ${cited.nome}, ${cited.patente || 'N/A'}, Divisao ${cited.divisao || 'N/A'}, Raca: ${cited.raca || 'N/A'}, Admissao: ${cited.admissao || 'N/A'}, Tempo de servico: ${formatTempoServico(cited.admissao, cited.timeline)}. `;
       links.push(`${SITE_URL}/tripulacao/${cited.slug}`);
       const timeline = cited.timeline || [];
       if ((intents.includes('carreira') || intents.includes('crew')) && timeline.length > 0) {
