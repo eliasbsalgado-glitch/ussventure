@@ -1,0 +1,70 @@
+{
+  "eventos": [
+    {
+      "id": "mmq9k7qi4nsd",
+      "divisao": "operacoes",
+      "divisaoNome": "Operacoes",
+      "divisaoCor": "#FFAA00",
+      "titulo": "Apresentação de exposição artes teste",
+      "data": "2026-03-24",
+      "texto": "o evento visa apresentar uma seção de testes",
+      "autorSlug": "ludmilla-benoir",
+      "criadoEm": "2026-03-14T11:50:01.770Z"
+    },
+    {
+      "id": "mmq9yitoynmr",
+      "divisao": "operacoes",
+      "divisaoNome": "Operacoes",
+      "divisaoCor": "#FFAA00",
+      "titulo": "Evento de teste 2",
+      "data": "2026-03-26",
+      "texto": "esse evento é para ver como o site se comporta com mais eventos ",
+      "autorSlug": "ludmilla-benoir",
+      "criadoEm": "2026-03-14T12:01:09.324Z"
+    },
+    {
+      "id": "mmqa32z73dac",
+      "divisao": "comunicacoes",
+      "divisaoNome": "Comunicacoes",
+      "divisaoCor": "#66CC66",
+      "titulo": "Evento de teste de comunicações",
+      "data": "2026-03-18",
+      "texto": "Evento de teste de comunicações",
+      "autorSlug": "tvashtar-uriza",
+      "criadoEm": "2026-03-14T12:04:42.067Z"
+    },
+    {
+      "id": "mmqa5ozyv6v2",
+      "divisao": "comando",
+      "divisaoNome": "Comando",
+      "divisaoCor": "#CC6666",
+      "titulo": "Evento de teste do comando",
+      "data": "2026-03-14",
+      "texto": "Evento de teste do comando",
+      "autorSlug": "ronnandrew-resident",
+      "criadoEm": "2026-03-14T12:06:43.918Z"
+    },
+    {
+      "id": "mmqa97jeodek",
+      "divisao": "academia",
+      "divisaoNome": "Academia",
+      "divisaoCor": "#999999",
+      "titulo": "Reciclagem do Comandante Eli",
+      "data": "2026-03-19",
+      "texto": "Curso de reciclagem ministrado pelo Capitão Marchezini",
+      "autorSlug": "achila16-resident",
+      "criadoEm": "2026-03-14T12:09:27.914Z"
+    },
+    {
+      "id": "mmqaab0z4609",
+      "divisao": "academia",
+      "divisaoNome": "Academia",
+      "divisaoCor": "#999999",
+      "titulo": "Treinamento com os cadetes",
+      "data": "2026-03-17",
+      "texto": "técnicas de movimentação",
+      "autorSlug": "achila16-resident",
+      "criadoEm": "2026-03-14T12:10:19.091Z"
+    }
+  ]
+}

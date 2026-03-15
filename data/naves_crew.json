@@ -1,0 +1,108 @@
+{
+  "adventure": {
+    "capitaoSlug": "elemer-piek",
+    "tripulantes": [
+      {
+        "fichaSlug": "elemer-piek",
+        "posto": "Capitão"
+      },
+      {
+        "fichaSlug": "lal-data",
+        "posto": "Tripulante"
+      }
+    ],
+    "missoes": [
+      {
+        "id": "mmmp01br0",
+        "titulo": "Implementação do Novo Sistema de Diários de Bordo (NSDB)",
+        "data": "2026-03-13",
+        "texto": "OBJETIVO DA MISSÃO\nSubstituir os métodos de registro obsoletos pelo Sistema de Diários de Bordo de Nova Geração. A USS Adventure foi selecionada para o teste de campo devido ao seu histórico de precisão sob pressão. Não espero nada menos que a excelência na transição de dados.\n\nDESCRIÇÃO DOS PROCEDIMENTOS\n\nMigração de Arquivos: Converter todos os registros de missões anteriores para o formato criptografado do NSDB.\n\nSincronização em Tempo Real: Configurar o sistema para capturar dados biométricos e ambientais durante os relatos dos oficiais de ponte.\n\nTeste de Integridade: Simular uma falha crítica de energia para garantir que os dados não sejam corrompidos sob condições extremas.\n\nOBSERVAÇÃO DO ALMIRANTE\nUma nave sem registros precisos é uma nave sem história. O NSDB não é apenas uma ferramenta administrativa; é a prova de que cada decisão tomada neste convés teve um propósito. Façam funcionar.",
+        "autorSlug": "elemer-piek",
+        "fotos": [
+          "https://i.imgur.com/RMhfA2o.jpg"
+        ],
+        "diarios": [
+          {
+            "autorSlug": "elemer-piek",
+            "autorNome": "elemer",
+            "data": "2026-03-13",
+            "texto": "As entradas de diários estão 100% operacionais."
+          },
+          {
+            "autorSlug": "lal-data",
+            "autorNome": "laldata",
+            "data": "2026-03-13",
+            "texto": "De acordo com minhas anotações, tudo está funcionando nos parâmetros normais de inserção particular nas entradas de diário da missão!"
+          }
+        ]
+      }
+    ],
+    "fotos": [
+      {
+        "url": "https://i.imgur.com/RMhfA2o.jpg",
+        "legenda": "Painel LCARD informações da nave"
+      },
+      {
+        "url": "https://i.imgur.com/gdLwwOK.jpg",
+        "legenda": "USS sobrevoando um planeta"
+      }
+    ]
+  },
+  "altotting": {
+    "capitaoSlug": "ronnandrew-resident",
+    "tripulantes": [
+      {
+        "fichaSlug": "ronnandrew-resident",
+        "posto": "Capitão"
+      }
+    ],
+    "missoes": []
+  },
+  "serenity": {
+    "capitaoSlug": "marchezini-winchester",
+    "tripulantes": [
+      {
+        "fichaSlug": "marchezini-winchester",
+        "posto": "Capitão"
+      },
+      {
+        "fichaSlug": "junior-maven-absinthe",
+        "posto": "Oficial de Ciências"
+      },
+      {
+        "fichaSlug": "tvashtar-uriza",
+        "posto": "Oficial Tático"
+      },
+      {
+        "fichaSlug": "ludmilla-benoir",
+        "posto": "Oficial de Engenharia"
+      }
+    ],
+    "missoes": []
+  },
+  "suidara": {
+    "capitaoSlug": "kharan-resident",
+    "tripulantes": [
+      {
+        "fichaSlug": "kharan-resident",
+        "posto": "Capitão"
+      }
+    ],
+    "missoes": []
+  },
+  "nautilus": {
+    "capitaoSlug": null,
+    "tripulantes": [],
+    "missoes": []
+  },
+  "rerum": {
+    "capitaoSlug": null,
+    "tripulantes": [],
+    "missoes": []
+  },
+  "andor": {
+    "capitaoSlug": null,
+    "tripulantes": [],
+    "missoes": []
+  }
+}

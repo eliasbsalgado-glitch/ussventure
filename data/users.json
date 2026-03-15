@@ -1,0 +1,47 @@
+{
+  "admin": {
+    "senha": "admin",
+    "role": "admin",
+    "fichaSlug": null
+  },
+  "elemer": {
+    "senha": "1234",
+    "role": "tripulante",
+    "fichaSlug": "elemer-piek"
+  },
+  "sailespy2": {
+    "senha": "Sailes159",
+    "role": "tripulante",
+    "fichaSlug": "sailespy2-resident"
+  },
+  "laldata": {
+    "senha": "1234",
+    "role": "tripulante",
+    "fichaSlug": "lal-data"
+  },
+  "uriza": {
+    "senha": "1234",
+    "role": "tripulante",
+    "fichaSlug": "tvashtar-uriza"
+  },
+  "marchezini": {
+    "senha": "1234",
+    "role": "tripulante",
+    "fichaSlug": "marchezini-winchester"
+  },
+  "ludmilla": {
+    "senha": "1234",
+    "role": "tripulante",
+    "fichaSlug": "ludmilla-benoir"
+  },
+  "ron": {
+    "senha": "1234",
+    "role": "tripulante",
+    "fichaSlug": "ronnandrew-resident"
+  },
+  "achila": {
+    "senha": "1234",
+    "role": "tripulante",
+    "fichaSlug": "achila16-resident"
+  }
+}
