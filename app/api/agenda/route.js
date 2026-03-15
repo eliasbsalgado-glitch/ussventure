@@ -1,6 +1,7 @@
 // API: /api/agenda — Gerenciamento de eventos da agenda por divisao
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
+import { sendPushToAll } from '@/lib/push';
 
 function getSession(request) {
   const cookie = request.cookies.get('session');
@@ -68,6 +69,18 @@ export async function POST(request) {
     INSERT INTO agenda_eventos (id, divisao, divisao_nome, divisao_cor, titulo, data, texto, autor_slug, criado_em)
     VALUES (${evento.id}, ${evento.divisao}, ${evento.divisaoNome}, ${evento.divisaoCor}, ${evento.titulo}, ${evento.data}, ${evento.texto}, ${evento.autorSlug}, ${evento.criadoEm})
   `;
+
+  // Enviar push notification para todos os inscritos
+  try {
+    const dataFormatada = evento.data.split('-').reverse().join('/');
+    await sendPushToAll(
+      `Novo Evento: ${evento.titulo}`,
+      `${dataFormatada} - ${evento.divisaoNome}${evento.texto ? ': ' + evento.texto : ''}`,
+      '/'
+    );
+  } catch (err) {
+    console.error('[AGENDA] Erro ao enviar push:', err);
+  }
 
   return NextResponse.json({ ok: true, evento }, { status: 201 });
 }

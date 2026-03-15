@@ -8,6 +8,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
+import NotificationButton from '@/components/NotificationButton';
 
 const navItems = [
   { href: '/',              label: 'PONTE' },
@@ -117,6 +118,7 @@ export default function LCARSLayout({ children }) {
 
               {/* Sidebar nav — botões de seção */}
               <div className="sidebar-nav">
+                <NotificationButton />
                 {user?.logged ? (
                   <>
                     {user.role === 'admin' && (
