@@ -8,12 +8,13 @@ import { getContoBySlug, getContos, getAllContoSlugs } from '@/lib/data';
 import { notFound } from 'next/navigation';
 
 export async function generateStaticParams() {
-  return getAllContoSlugs().map((slug) => ({ slug }));
+  const slugs = await getAllContoSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const result = getContoBySlug(slug);
+  const result = await getContoBySlug(slug);
   if (!result) return { title: 'Conto nao encontrado' };
   return {
     title: `${result.capitulo.titulo} — ${result.arco.titulo} — USS Venture`,
@@ -27,8 +28,7 @@ const arcoCores = {
   'a-missao-final': 'var(--lcars-red)',
 };
 
-function getNavigation(slug) {
-  const arcos = getContos();
+function getNavigation(slug, arcos) {
   const allCaps = [];
   for (const arco of arcos) {
     for (const cap of arco.capitulos) {
@@ -47,12 +47,13 @@ function getNavigation(slug) {
 
 export default async function ContoReadPage({ params }) {
   const { slug } = await params;
-  const result = getContoBySlug(slug);
+  const result = await getContoBySlug(slug);
   if (!result) notFound();
 
   const { arco, capitulo } = result;
   const cor = arcoCores[arco.slug] || 'var(--lcars-sky)';
-  const nav = getNavigation(slug);
+  const arcos = await getContos();
+  const nav = getNavigation(slug, arcos);
 
   return (
     <div>

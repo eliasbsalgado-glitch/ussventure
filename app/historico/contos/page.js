@@ -17,8 +17,8 @@ const arcoCores = {
   'a-missao-final': { cor: 'var(--lcars-red)', badge: '#CC4444' },
 };
 
-export default function ContosPage() {
-  const arcos = getContos();
+export default async function ContosPage() {
+  const arcos = await getContos();
 
   return (
     <div>

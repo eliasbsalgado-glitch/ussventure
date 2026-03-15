@@ -7,9 +7,9 @@ import Link from 'next/link';
 import { getFichaStats, getDivisoes, getNaves } from '@/lib/data';
 import AgendaHome from '@/components/AgendaHome';
 
-export default function HomePage() {
-  const stats = getFichaStats();
-  const divisoes = getDivisoes();
+export default async function HomePage() {
+  const stats = await getFichaStats();
+  const divisoes = await getDivisoes();
   const naves = getNaves();
   // Active divisions = those with at least 1 active member (excluding Reserva and Baixa)
   const activeDivisions = divisoes.filter(d => d.nome !== 'Reserva' && d.nome !== 'Baixa' && d.qtd > 0).length;

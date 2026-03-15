@@ -1,18 +1,6 @@
 // API: /api/diarios — Diarios de bordo pessoais
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const FICHAS_FILE = path.join(process.cwd(), 'data', 'fichas.json');
-
-function readFichas() {
-  if (!fs.existsSync(FICHAS_FILE)) return [];
-  return JSON.parse(fs.readFileSync(FICHAS_FILE, 'utf-8'));
-}
-
-function writeFichas(data) {
-  fs.writeFileSync(FICHAS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
+import sql from '@/lib/db';
 
 function getSession(request) {
   const cookie = request.cookies.get('session');
@@ -27,13 +15,10 @@ export async function GET(request) {
   if (!slug) return NextResponse.json({ error: 'slug requerido' }, { status: 400 });
 
   const session = getSession(request);
-  const fichas = readFichas();
-  const ficha = fichas.find(f => f.slug === slug);
-  if (!ficha) return NextResponse.json({ error: 'Ficha nao encontrada' }, { status: 404 });
+  const rows = await sql`SELECT diarios FROM fichas WHERE slug = ${slug}`;
+  if (rows.length === 0) return NextResponse.json({ error: 'Ficha nao encontrada' }, { status: 404 });
 
-  const diarios = ficha.diarios || [];
-
-  // If it's the owner or admin, show all entries. Otherwise, show only public ones.
+  const diarios = rows[0].diarios || [];
   const isOwner = session && (session.fichaSlug === slug || session.role === 'admin');
   const filtered = isOwner ? diarios : diarios.filter(d => d.publico);
 
@@ -48,12 +33,10 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const fichas = readFichas();
-  const idx = fichas.findIndex(f => f.slug === session.fichaSlug);
-  if (idx < 0) return NextResponse.json({ error: 'Ficha nao encontrada' }, { status: 404 });
+  const rows = await sql`SELECT diarios FROM fichas WHERE slug = ${session.fichaSlug}`;
+  if (rows.length === 0) return NextResponse.json({ error: 'Ficha nao encontrada' }, { status: 404 });
 
-  if (!fichas[idx].diarios) fichas[idx].diarios = [];
-
+  const diarios = rows[0].diarios || [];
   const entry = {
     id: Date.now().toString(),
     data: body.data || new Date().toISOString().split('T')[0],
@@ -62,8 +45,8 @@ export async function POST(request) {
     createdAt: new Date().toISOString(),
   };
 
-  fichas[idx].diarios.unshift(entry); // mais recente primeiro
-  writeFichas(fichas);
+  diarios.unshift(entry);
+  await sql`UPDATE fichas SET diarios = ${JSON.stringify(diarios)}::jsonb WHERE slug = ${session.fichaSlug}`;
 
   return NextResponse.json(entry, { status: 201 });
 }
@@ -79,12 +62,11 @@ export async function DELETE(request) {
 
   if (!slug || !entryId) return NextResponse.json({ error: 'Parametros invalidos' }, { status: 400 });
 
-  const fichas = readFichas();
-  const idx = fichas.findIndex(f => f.slug === slug);
-  if (idx < 0) return NextResponse.json({ error: 'Ficha nao encontrada' }, { status: 404 });
+  const rows = await sql`SELECT diarios FROM fichas WHERE slug = ${slug}`;
+  if (rows.length === 0) return NextResponse.json({ error: 'Ficha nao encontrada' }, { status: 404 });
 
-  fichas[idx].diarios = (fichas[idx].diarios || []).filter(d => d.id !== entryId);
-  writeFichas(fichas);
+  const diarios = (rows[0].diarios || []).filter(d => d.id !== entryId);
+  await sql`UPDATE fichas SET diarios = ${JSON.stringify(diarios)}::jsonb WHERE slug = ${slug}`;
 
   return NextResponse.json({ ok: true });
 }

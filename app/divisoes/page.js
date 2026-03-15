@@ -11,8 +11,8 @@ export const metadata = {
   description: 'Divisoes operacionais da Frota Venture.',
 };
 
-export default function DivisoesPage() {
-  const divisoes = getDivisoes();
+export default async function DivisoesPage() {
+  const divisoes = await getDivisoes();
   const totalAtivos = divisoes.reduce((sum, d) => sum + d.qtd, 0);
 
   return (

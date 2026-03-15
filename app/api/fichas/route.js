@@ -1,18 +1,6 @@
 // API: /api/fichas — CRUD para fichas de servico
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const FILE = path.join(process.cwd(), 'data', 'fichas.json');
-
-function read() {
-  if (!fs.existsSync(FILE)) return [];
-  return JSON.parse(fs.readFileSync(FILE, 'utf-8'));
-}
-
-function write(data) {
-  fs.writeFileSync(FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
+import sql from '@/lib/db';
 
 function slugify(str) {
   return str.toLowerCase()
@@ -22,39 +10,41 @@ function slugify(str) {
 }
 
 export async function GET() {
-  return NextResponse.json(read());
+  const rows = await sql`SELECT * FROM fichas ORDER BY nome`;
+  return NextResponse.json(rows);
 }
 
 export async function POST(request) {
   const body = await request.json();
-  const fichas = read();
-
-  const ficha = {
-    slug: slugify(body.nome || 'sem-nome'),
-    nome: body.nome || '',
-    nascimentoSL: body.nascimentoSL || '',
-    cidade: body.cidade || '',
-    raca: body.raca || '',
-    admissao: body.admissao || '',
-    patente: body.patente || '',
-    divisao: body.divisao || '',
-    departamento: body.departamento || '',
-    foto: body.foto || '',
-    historia: body.historia || '',
-    timeline: body.timeline || [],
-    condecoracoes: body.condecoracoes || [],
-    cursos: body.cursos || [],
-    createdAt: new Date().toISOString(),
-  };
+  let slug = slugify(body.nome || 'sem-nome');
 
   // Check duplicate slug
-  const existing = fichas.findIndex(f => f.slug === ficha.slug);
-  if (existing >= 0) {
-    ficha.slug = ficha.slug + '-' + Date.now();
+  const existing = await sql`SELECT slug FROM fichas WHERE slug = ${slug}`;
+  if (existing.length > 0) {
+    slug = slug + '-' + Date.now();
   }
 
-  fichas.push(ficha);
-  write(fichas);
+  await sql`
+    INSERT INTO fichas (slug, nome, nascimento_sl, cidade, raca, admissao, patente, divisao, departamento, foto, historia, timeline, condecoracoes, cursos, created_at)
+    VALUES (
+      ${slug},
+      ${body.nome || ''},
+      ${body.nascimentoSL || ''},
+      ${body.cidade || ''},
+      ${body.raca || ''},
+      ${body.admissao || ''},
+      ${body.patente || ''},
+      ${body.divisao || ''},
+      ${body.departamento || ''},
+      ${body.foto || ''},
+      ${body.historia || ''},
+      ${JSON.stringify(body.timeline || [])},
+      ${JSON.stringify(body.condecoracoes || [])},
+      ${JSON.stringify(body.cursos || [])},
+      ${new Date().toISOString()}
+    )
+  `;
 
+  const ficha = { slug, nome: body.nome, patente: body.patente, divisao: body.divisao };
   return NextResponse.json(ficha, { status: 201 });
 }

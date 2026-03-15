@@ -1,18 +1,6 @@
 // API: /api/naves/[slug]/missoes — Mission management
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const CREW_FILE = path.join(process.cwd(), 'data', 'naves_crew.json');
-
-function getCrew() {
-  if (!fs.existsSync(CREW_FILE)) return {};
-  return JSON.parse(fs.readFileSync(CREW_FILE, 'utf-8'));
-}
-
-function saveCrew(data) {
-  fs.writeFileSync(CREW_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
+import sql from '@/lib/db';
 
 function getSession(request) {
   const cookie = request.cookies.get('session');
@@ -23,29 +11,23 @@ function getSession(request) {
 // GET — lista missões de uma nave
 export async function GET(request, { params }) {
   const { slug } = await params;
-  const crew = getCrew();
-  const naveCrew = crew[slug];
-  if (!naveCrew) return NextResponse.json([]);
-  return NextResponse.json(naveCrew.missoes || []);
+  const rows = await sql`SELECT missoes FROM naves_crew WHERE nave_slug = ${slug}`;
+  if (rows.length === 0) return NextResponse.json([]);
+  return NextResponse.json(rows[0].missoes || []);
 }
 
 // POST — capitão cria nova missão
 export async function POST(request, { params }) {
   const { slug } = await params;
   const session = getSession(request);
-  if (!session) {
-    return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
 
-  const crew = getCrew();
-  if (!crew[slug]) {
-    return NextResponse.json({ error: 'Nave nao encontrada' }, { status: 404 });
-  }
+  const rows = await sql`SELECT * FROM naves_crew WHERE nave_slug = ${slug}`;
+  if (rows.length === 0) return NextResponse.json({ error: 'Nave nao encontrada' }, { status: 404 });
 
-  const naveCrew = crew[slug];
-  const isCaptain = session.fichaSlug && session.fichaSlug === naveCrew.capitaoSlug;
+  const naveCrew = rows[0];
+  const isCaptain = session.fichaSlug && session.fichaSlug === naveCrew.capitao_slug;
   const isAdmin = session.role === 'admin';
-
   if (!isCaptain && !isAdmin) {
     return NextResponse.json({ error: 'Apenas o capitao pode criar missoes' }, { status: 403 });
   }
@@ -55,21 +37,17 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: 'Titulo, data e texto obrigatorios' }, { status: 400 });
   }
 
-  const id = 'm' + Date.now().toString(36);
-
+  const missoes = naveCrew.missoes || [];
   const missao = {
-    id,
-    titulo,
-    data,
-    texto,
+    id: 'm' + Date.now().toString(36),
+    titulo, data, texto,
     autorSlug: session.fichaSlug || session.login,
     fotos: Array.isArray(fotos) ? fotos.filter(Boolean) : [],
     diarios: [],
   };
 
-  if (!naveCrew.missoes) naveCrew.missoes = [];
-  naveCrew.missoes.unshift(missao); // mais recente primeiro
-  saveCrew(crew);
+  missoes.unshift(missao);
+  await sql`UPDATE naves_crew SET missoes = ${JSON.stringify(missoes)}::jsonb WHERE nave_slug = ${slug}`;
 
   return NextResponse.json({ ok: true, missao }, { status: 201 });
 }
@@ -78,30 +56,29 @@ export async function POST(request, { params }) {
 export async function PUT(request, { params }) {
   const { slug } = await params;
   const session = getSession(request);
-  if (!session) {
-    return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
 
-  const crew = getCrew();
-  if (!crew[slug]) return NextResponse.json({ error: 'Nave nao encontrada' }, { status: 404 });
+  const rows = await sql`SELECT * FROM naves_crew WHERE nave_slug = ${slug}`;
+  if (rows.length === 0) return NextResponse.json({ error: 'Nave nao encontrada' }, { status: 404 });
 
-  const naveCrew = crew[slug];
-  const isCaptain = session.fichaSlug && session.fichaSlug === naveCrew.capitaoSlug;
+  const naveCrew = rows[0];
+  const isCaptain = session.fichaSlug && session.fichaSlug === naveCrew.capitao_slug;
   const isAdmin = session.role === 'admin';
   if (!isCaptain && !isAdmin) {
     return NextResponse.json({ error: 'Apenas o capitao pode editar missoes' }, { status: 403 });
   }
 
   const { missaoId, titulo, data, texto, fotos } = await request.json();
-  const missao = (naveCrew.missoes || []).find(m => m.id === missaoId);
+  const missoes = naveCrew.missoes || [];
+  const missao = missoes.find(m => m.id === missaoId);
   if (!missao) return NextResponse.json({ error: 'Missao nao encontrada' }, { status: 404 });
 
   if (titulo) missao.titulo = titulo;
   if (data) missao.data = data;
   if (texto) missao.texto = texto;
   if (fotos !== undefined) missao.fotos = Array.isArray(fotos) ? fotos.filter(Boolean) : [];
-  saveCrew(crew);
 
+  await sql`UPDATE naves_crew SET missoes = ${JSON.stringify(missoes)}::jsonb WHERE nave_slug = ${slug}`;
   return NextResponse.json({ ok: true, missao });
 }
 
@@ -109,26 +86,21 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   const { slug } = await params;
   const session = getSession(request);
-  if (!session) {
-    return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
 
-  const crew = getCrew();
-  if (!crew[slug]) return NextResponse.json({ error: 'Nave nao encontrada' }, { status: 404 });
+  const rows = await sql`SELECT * FROM naves_crew WHERE nave_slug = ${slug}`;
+  if (rows.length === 0) return NextResponse.json({ error: 'Nave nao encontrada' }, { status: 404 });
 
-  const naveCrew = crew[slug];
-  const isCaptain = session.fichaSlug && session.fichaSlug === naveCrew.capitaoSlug;
+  const naveCrew = rows[0];
+  const isCaptain = session.fichaSlug && session.fichaSlug === naveCrew.capitao_slug;
   const isAdmin = session.role === 'admin';
   if (!isCaptain && !isAdmin) {
     return NextResponse.json({ error: 'Apenas o capitao pode excluir missoes' }, { status: 403 });
   }
 
   const { missaoId } = await request.json();
-  const idx = (naveCrew.missoes || []).findIndex(m => m.id === missaoId);
-  if (idx === -1) return NextResponse.json({ error: 'Missao nao encontrada' }, { status: 404 });
+  const missoes = (naveCrew.missoes || []).filter(m => m.id !== missaoId);
 
-  naveCrew.missoes.splice(idx, 1);
-  saveCrew(crew);
-
-  return NextResponse.json({ ok: true, missoes: naveCrew.missoes });
+  await sql`UPDATE naves_crew SET missoes = ${JSON.stringify(missoes)}::jsonb WHERE nave_slug = ${slug}`;
+  return NextResponse.json({ ok: true, missoes });
 }

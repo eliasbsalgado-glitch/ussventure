@@ -1,29 +1,21 @@
 // API: /api/auth — Login e sessao simples com cookie
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const USERS_FILE = path.join(process.cwd(), 'data', 'users.json');
-
-function getUsers() {
-  if (!fs.existsSync(USERS_FILE)) return {};
-  return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-}
+import sql from '@/lib/db';
 
 export async function POST(request) {
   const { action, login, senha } = await request.json();
 
   if (action === 'login') {
-    const users = getUsers();
-    const user = users[login];
-    if (!user || user.senha !== senha) {
+    const rows = await sql`SELECT login, senha, role, ficha_slug FROM users WHERE login = ${login}`;
+    if (rows.length === 0 || rows[0].senha !== senha) {
       return NextResponse.json({ error: 'Login ou senha invalidos' }, { status: 401 });
     }
 
+    const user = rows[0];
     const session = {
-      login,
+      login: user.login,
       role: user.role,
-      fichaSlug: user.fichaSlug || null,
+      fichaSlug: user.ficha_slug || null,
     };
 
     const res = NextResponse.json(session);

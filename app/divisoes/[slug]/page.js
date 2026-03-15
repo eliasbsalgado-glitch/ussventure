@@ -8,13 +8,13 @@ import { getDivisoes, getDivisaoBySlug, getTripulantesByDivisao } from '@/lib/da
 import AgendaPanel from '@/components/AgendaPanel';
 
 export async function generateStaticParams() {
-  const divisoes = getDivisoes();
+  const divisoes = await getDivisoes();
   return divisoes.map(d => ({ slug: d.slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const div = getDivisaoBySlug(slug);
+  const div = await getDivisaoBySlug(slug);
   if (!div) return { title: 'Divisao — USS Venture' };
   return {
     title: `${div.nome} — USS Venture`,
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }) {
 
 export default async function DivisaoDetailPage({ params }) {
   const { slug } = await params;
-  const div = getDivisaoBySlug(slug);
+  const div = await getDivisaoBySlug(slug);
 
   if (!div) {
     return (
@@ -46,7 +46,7 @@ export default async function DivisaoDetailPage({ params }) {
     );
   }
 
-  const tripulantes = getTripulantesByDivisao(slug);
+  const tripulantes = await getTripulantesByDivisao(slug);
 
   // Rank priority for sorting
   const rankOrder = {

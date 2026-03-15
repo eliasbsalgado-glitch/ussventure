@@ -1,18 +1,6 @@
 // API: /api/users — Gerenciamento de usuarios (admin only)
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const USERS_FILE = path.join(process.cwd(), 'data', 'users.json');
-
-function getUsers() {
-  if (!fs.existsSync(USERS_FILE)) return {};
-  return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-}
-
-function saveUsers(users) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
-}
+import sql from '@/lib/db';
 
 function getSession(request) {
   const cookie = request.cookies.get('session');
@@ -32,18 +20,12 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Login e senha obrigatorios' }, { status: 400 });
   }
 
-  const users = getUsers();
-  if (users[login]) {
+  const existing = await sql`SELECT login FROM users WHERE login = ${login}`;
+  if (existing.length > 0) {
     return NextResponse.json({ error: 'Usuario ja existe' }, { status: 409 });
   }
 
-  users[login] = {
-    senha,
-    role: 'tripulante',
-    fichaSlug: fichaSlug || null,
-  };
-
-  saveUsers(users);
+  await sql`INSERT INTO users (login, senha, role, ficha_slug) VALUES (${login}, ${senha}, 'tripulante', ${fichaSlug || null})`;
   return NextResponse.json({ ok: true, login }, { status: 201 });
 }
 
@@ -54,11 +36,10 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
   }
 
-  const users = getUsers();
-  // Remove senhas do retorno
+  const rows = await sql`SELECT login, role, ficha_slug FROM users`;
   const sanitized = {};
-  for (const [k, v] of Object.entries(users)) {
-    sanitized[k] = { role: v.role, fichaSlug: v.fichaSlug };
+  for (const r of rows) {
+    sanitized[r.login] = { role: r.role, fichaSlug: r.ficha_slug };
   }
   return NextResponse.json(sanitized);
 }
@@ -73,12 +54,11 @@ export async function PUT(request) {
   const { login, novaSenha, fichaSlug } = await request.json();
   if (!login) return NextResponse.json({ error: 'Login obrigatorio' }, { status: 400 });
 
-  const users = getUsers();
-  if (!users[login]) return NextResponse.json({ error: 'Usuario nao encontrado' }, { status: 404 });
+  const existing = await sql`SELECT login FROM users WHERE login = ${login}`;
+  if (existing.length === 0) return NextResponse.json({ error: 'Usuario nao encontrado' }, { status: 404 });
 
-  if (novaSenha) users[login].senha = novaSenha;
-  if (fichaSlug !== undefined) users[login].fichaSlug = fichaSlug;
-  saveUsers(users);
+  if (novaSenha) await sql`UPDATE users SET senha = ${novaSenha} WHERE login = ${login}`;
+  if (fichaSlug !== undefined) await sql`UPDATE users SET ficha_slug = ${fichaSlug} WHERE login = ${login}`;
 
   return NextResponse.json({ ok: true, login });
 }
@@ -93,16 +73,13 @@ export async function DELETE(request) {
   const { login } = await request.json();
   if (!login) return NextResponse.json({ error: 'Login obrigatorio' }, { status: 400 });
 
-  const users = getUsers();
-  if (!users[login]) return NextResponse.json({ error: 'Usuario nao encontrado' }, { status: 404 });
+  const existing = await sql`SELECT login, role FROM users WHERE login = ${login}`;
+  if (existing.length === 0) return NextResponse.json({ error: 'Usuario nao encontrado' }, { status: 404 });
 
-  // Não permitir excluir o admin
-  if (users[login].role === 'admin') {
+  if (existing[0].role === 'admin') {
     return NextResponse.json({ error: 'Nao e possivel excluir o administrador' }, { status: 403 });
   }
 
-  delete users[login];
-  saveUsers(users);
-
+  await sql`DELETE FROM users WHERE login = ${login}`;
   return NextResponse.json({ ok: true });
 }
