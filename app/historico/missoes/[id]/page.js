@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import PhotoGallery from '@/components/PhotoGallery';
 
 const naveCores = {
   adventure: 'var(--lcars-orange)',
@@ -44,7 +45,6 @@ export default function MissaoDetailPage() {
   const [editingCrew, setEditingCrew] = useState(false);
   const [selectedCrew, setSelectedCrew] = useState([]);
   const [selectedCrewPosto, setSelectedCrewPosto] = useState('Tripulante');
-  const [lightboxImg, setLightboxImg] = useState(null);
   const [newFotoUrl, setNewFotoUrl] = useState('');
   const [fotoMsg, setFotoMsg] = useState('');
 
@@ -338,35 +338,23 @@ export default function MissaoDetailPage() {
         </div>
       </div>
 
-      {/* Fotos da Missão */}
       <div className="lcars-panel">
         <div className="lcars-panel-header blue">Registros Visuais da Missao ({fotos.length})</div>
         <div className="lcars-panel-body">
           {fotos.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px', marginBottom: canAddPhoto ? '16px' : 0 }}>
-              {fotos.map((url, i) => (
-                <div key={i} style={{ position: 'relative' }}>
-                  <img src={url} alt={`Registro visual ${i + 1}`}
-                    onClick={() => setLightboxImg(url)}
-                    style={{
-                      width: '100%', height: '180px', objectFit: 'cover',
-                      borderRadius: 'var(--lcars-radius-sm)', border: '1px solid var(--lcars-blue)',
-                      cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s',
-                    }}
-                    onMouseEnter={e => { e.target.style.transform = 'scale(1.03)'; e.target.style.boxShadow = '0 0 15px var(--lcars-blue)'; }}
-                    onMouseLeave={e => { e.target.style.transform = 'scale(1)'; e.target.style.boxShadow = 'none'; }}
-                  />
-                  {canManage && (
-                    <button onClick={() => removeMissionFoto(i)} style={{
-                      position: 'absolute', top: '6px', right: '6px',
-                      background: 'rgba(204,68,68,0.9)', border: 'none',
-                      color: '#fff', borderRadius: '50%', width: '22px', height: '22px',
-                      fontSize: '0.6rem', cursor: 'pointer', lineHeight: '22px', textAlign: 'center',
-                    }}>✕</button>
-                  )}
+            <>
+              <PhotoGallery fotos={fotos} titulo={missao.titulo} cor="var(--lcars-blue)" />
+              {canManage && (
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '10px' }}>
+                  {fotos.map((url, i) => (
+                    <button key={i} onClick={() => removeMissionFoto(i)} className="lcars-btn red"
+                      style={{ fontSize: '0.6rem', padding: '3px 8px', border: 'none', cursor: 'pointer' }}>
+                      Remover foto {i + 1}
+                    </button>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
           {fotos.length === 0 && !canAddPhoto && (
             <div style={{ textAlign: 'center', padding: '16px', color: 'var(--lcars-text-dim)', fontSize: '0.85rem' }}>
@@ -376,7 +364,7 @@ export default function MissaoDetailPage() {
           {/* Adicionar foto — participantes e admin/capitão */}
           {canAddPhoto && (
             <form onSubmit={addMissionFoto} style={{
-              padding: '10px', background: 'rgba(0,0,0,0.2)',
+              padding: '10px', background: 'rgba(0,0,0,0.2)', marginTop: '12px',
               borderRadius: 'var(--lcars-radius-sm)', border: '1px solid #333',
             }}>
               <div style={{ fontSize: '0.65rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>
@@ -643,20 +631,7 @@ export default function MissaoDetailPage() {
         </div>
       )}
 
-      {/* Lightbox */}
-      {lightboxImg && (
-        <div onClick={() => setLightboxImg(null)} style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.9)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-        }}>
-          <img src={lightboxImg} alt="" style={{
-            maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain',
-            borderRadius: 'var(--lcars-radius-sm)', border: '2px solid var(--lcars-blue)',
-          }} />
-          <div style={{ position: 'absolute', top: '20px', right: '20px', color: '#fff', fontSize: '1.5rem' }}>✕</div>
-        </div>
-      )}
+
     </div>
   );
 }

@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import PhotoGallery from '@/components/PhotoGallery';
 
 function normalizeImgurUrl(url) {
   if (!url) return url;
@@ -24,7 +25,6 @@ export default function NaveClient({ nave, headerColor }) {
   const [fichasAtivas, setFichasAtivas] = useState([]);
   const [loadingCrew, setLoadingCrew] = useState(true);
   const [missoes, setMissoes] = useState([]);
-  const [lightboxImg, setLightboxImg] = useState(null);
 
   useEffect(() => {
     fetch(`/api/naves/${nave.slug}`)
@@ -56,38 +56,7 @@ export default function NaveClient({ nave, headerColor }) {
             Registros Visuais da Nave
           </div>
           <div className="lcars-panel-body">
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: '12px',
-            }}>
-              {shipFotos.map((f, i) => (
-                <div key={i} style={{ position: 'relative' }}>
-                  <img
-                    src={f.url}
-                    alt={f.legenda || `Foto ${i + 1}`}
-                    onClick={() => setLightboxImg(f.url)}
-                    style={{
-                      width: '100%', height: '160px', objectFit: 'cover',
-                      borderRadius: 'var(--lcars-radius-sm)',
-                      border: `1px solid ${headerColor}`,
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                    }}
-                    onMouseEnter={e => { e.target.style.transform = 'scale(1.03)'; e.target.style.boxShadow = `0 0 15px ${headerColor}`; }}
-                    onMouseLeave={e => { e.target.style.transform = 'scale(1)'; e.target.style.boxShadow = 'none'; }}
-                  />
-                  {f.legenda && (
-                    <div style={{
-                      fontSize: '0.7rem', color: 'var(--lcars-text-dim)',
-                      marginTop: '4px', textAlign: 'center', fontStyle: 'italic',
-                    }}>
-                      {f.legenda}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <PhotoGallery fotos={shipFotos} titulo={nave.nome} cor={headerColor} />
           </div>
         </div>
       )}
@@ -240,21 +209,6 @@ export default function NaveClient({ nave, headerColor }) {
         </div>
       </div>
 
-      {/* ===== LIGHTBOX ===== */}
-      {lightboxImg && (
-        <div onClick={() => setLightboxImg(null)} style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.9)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer',
-        }}>
-          <img src={lightboxImg} alt="" style={{
-            maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain',
-            borderRadius: 'var(--lcars-radius-sm)', border: `2px solid ${headerColor}`,
-          }} />
-          <div style={{ position: 'absolute', top: '20px', right: '20px', color: '#fff', fontSize: '1.5rem' }}>✕</div>
-        </div>
-      )}
     </>
   );
 }
