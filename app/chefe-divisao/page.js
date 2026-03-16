@@ -47,6 +47,16 @@ export default function ChefeDivisaoPage() {
   // Confirm delete department
   const [confirmDeleteDep, setConfirmDeleteDep] = useState(null);
 
+  // Cursos da Academia (only for academia chefe)
+  const [allFichas, setAllFichas] = useState([]);
+  const [cursoSearch, setCursoSearch] = useState('');
+  const [selectedOficial, setSelectedOficial] = useState(null);
+  const [oficialCursos, setOficialCursos] = useState([]);
+  const [novoCursoNome, setNovoCursoNome] = useState('');
+  const [novoCursoData, setNovoCursoData] = useState(new Date().toISOString().split('T')[0]);
+  const [cursoMsg, setCursoMsg] = useState('');
+  const [loadingCursos, setLoadingCursos] = useState(false);
+
   // Evento form
   const [showEventoForm, setShowEventoForm] = useState(false);
   const [eventoTitulo, setEventoTitulo] = useState('');
@@ -75,6 +85,11 @@ export default function ChefeDivisaoPage() {
       setEditDesc(divDataRes.descricao || '');
       setLoading(false);
     }).catch(() => setLoading(false));
+
+    // For academia: load ALL fichas for course management
+    if (divisaoSlug === 'academia') {
+      fetch('/api/fichas').then(r => r.json()).then(data => setAllFichas(data)).catch(() => {});
+    }
   }, [divisaoSlug]);
 
   if (authLoading) {
@@ -210,6 +225,49 @@ export default function ChefeDivisaoPage() {
     const m = membros.find(f => f.slug === slug);
     return m ? m.nome : slug;
   }
+
+  // === Cursos da Academia ===
+  const isAcademia = divisaoSlug === 'academia';
+
+  async function selectOficialForCursos(ficha) {
+    setSelectedOficial(ficha);
+    setCursoMsg('');
+    setNovoCursoNome('');
+    setLoadingCursos(true);
+    try {
+      const res = await fetch(`/api/fichas/${ficha.slug}`);
+      const data = await res.json();
+      setOficialCursos(data.cursos || []);
+    } catch { setOficialCursos([]); }
+    setLoadingCursos(false);
+  }
+
+  async function adicionarCurso(e) {
+    e.preventDefault();
+    if (!selectedOficial || !novoCursoNome.trim()) return;
+    setCursoMsg('');
+    const res = await fetch(`/api/fichas/${selectedOficial.slug}/cursos`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'add', curso: { nome: novoCursoNome.trim(), data: novoCursoData } }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setOficialCursos(data.cursos);
+      setNovoCursoNome('');
+      setCursoMsg(`Curso adicionado para ${data.oficialNome}!`);
+    } else {
+      const data = await res.json();
+      setCursoMsg(`Erro: ${data.error}`);
+    }
+  }
+
+  const filteredFichasCurso = cursoSearch.length >= 2
+    ? allFichas.filter(f =>
+        f.nome.toLowerCase().includes(cursoSearch.toLowerCase()) ||
+        f.slug.toLowerCase().includes(cursoSearch.toLowerCase())
+      ).slice(0, 12)
+    : [];
 
   const departamentos = divData.departamentos || [];
 
@@ -404,6 +462,132 @@ export default function ChefeDivisaoPage() {
           )}
         </div>
       </div>
+
+      {/* ===== CURSOS DA ACADEMIA (only for academia chefe) ===== */}
+      {isAcademia && (
+        <div className="lcars-panel" style={{ marginBottom: '16px' }}>
+          <div className="lcars-panel-header teal">
+            Cursos da Academia — Gerenciamento
+          </div>
+          <div className="lcars-panel-body">
+            <p style={{ fontSize: '0.8rem', color: 'var(--lcars-text-dim)', marginBottom: '14px', lineHeight: '1.5' }}>
+              Busque um oficial da Frota para visualizar seus cursos e adicionar novos registros academicos.
+            </p>
+
+            {/* Search */}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Buscar Oficial</label>
+              <input
+                style={{ ...inputStyle, width: '100%' }}
+                placeholder="Digite o nome do oficial (minimo 2 caracteres)..."
+                value={cursoSearch}
+                onChange={e => { setCursoSearch(e.target.value); if (e.target.value.length < 2) setSelectedOficial(null); }}
+              />
+            </div>
+
+            {/* Search results */}
+            {filteredFichasCurso.length > 0 && (
+              <div style={{
+                maxHeight: '200px', overflow: 'auto', marginBottom: '14px',
+                border: '1px solid #333', borderRadius: 'var(--lcars-radius-sm)',
+                background: 'rgba(0,0,0,0.3)',
+              }}>
+                {filteredFichasCurso.map(f => (
+                  <div key={f.slug} onClick={() => { selectOficialForCursos(f); setCursoSearch(f.nome); }}
+                    style={{
+                      padding: '8px 14px', cursor: 'pointer', fontSize: '0.85rem',
+                      borderBottom: '1px solid #222', display: 'flex', gap: '10px', alignItems: 'center',
+                      color: selectedOficial?.slug === f.slug ? 'var(--lcars-teal)' : 'var(--lcars-text-light)',
+                      background: selectedOficial?.slug === f.slug ? 'rgba(102,204,153,0.1)' : 'transparent',
+                    }}>
+                    {f.foto ? (
+                      <img src={f.foto} alt="" style={{ width: '30px', height: '36px', borderRadius: '3px', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '30px', height: '36px', borderRadius: '3px', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: '#555' }}>{f.nome.charAt(0)}</div>
+                    )}
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{f.nome}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--lcars-text-dim)' }}>{f.patente} — {f.divisao}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Selected oficial — cursos + add form */}
+            {selectedOficial && (
+              <div style={{
+                padding: '16px', background: 'rgba(102,204,153,0.05)',
+                border: '1px solid rgba(102,204,153,0.2)', borderRadius: 'var(--lcars-radius-sm)',
+              }}>
+                <div style={{
+                  display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '14px',
+                  paddingBottom: '12px', borderBottom: '1px solid rgba(102,204,153,0.15)',
+                }}>
+                  {selectedOficial.foto ? (
+                    <img src={selectedOficial.foto} alt="" style={{ width: '45px', height: '55px', borderRadius: 'var(--lcars-radius-sm)', objectFit: 'cover', border: '1px solid var(--lcars-teal)' }} />
+                  ) : (
+                    <div style={{ width: '45px', height: '55px', borderRadius: 'var(--lcars-radius-sm)', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--lcars-teal)', fontWeight: 700 }}>{selectedOficial.nome.charAt(0)}</div>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--lcars-teal)', fontSize: '1rem' }}>{selectedOficial.nome}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--lcars-text-dim)' }}>{selectedOficial.patente} — {selectedOficial.divisao}</div>
+                  </div>
+                </div>
+
+                {/* Current cursos */}
+                <div style={{ marginBottom: '14px' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+                    Cursos Registrados ({oficialCursos.length})
+                  </div>
+                  {loadingCursos ? (
+                    <div style={{ color: 'var(--lcars-text-dim)', fontSize: '0.8rem' }}>Carregando...</div>
+                  ) : oficialCursos.length === 0 ? (
+                    <div style={{ color: 'var(--lcars-text-dim)', fontSize: '0.8rem', fontStyle: 'italic' }}>Nenhum curso registrado.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {oficialCursos.map((c, i) => (
+                        <div key={i} style={{
+                          display: 'flex', gap: '10px', alignItems: 'center',
+                          padding: '6px 10px', background: 'rgba(0,0,0,0.3)',
+                          borderRadius: 'var(--lcars-radius-sm)', borderLeft: '3px solid var(--lcars-teal)',
+                        }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--lcars-sky)', flexShrink: 0 }}>{c.data || '—'}</span>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--lcars-peach)' }}>{c.nome}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Add curso form */}
+                <form onSubmit={adicionarCurso}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+                    Adicionar Novo Curso
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
+                      <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--lcars-text-dim)', marginBottom: '4px' }}>Nome do Curso</label>
+                      <input style={{ ...inputStyle, width: '100%' }} value={novoCursoNome} onChange={e => setNovoCursoNome(e.target.value)} placeholder="Ex: Astrofisica Basica" required />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--lcars-text-dim)', marginBottom: '4px' }}>Data</label>
+                      <input type="date" style={inputStyle} value={novoCursoData} onChange={e => setNovoCursoData(e.target.value)} />
+                    </div>
+                    <button type="submit" className="lcars-btn teal" style={{ fontSize: '0.8rem', border: 'none', cursor: 'pointer', padding: '8px 20px' }}>+ Adicionar Curso</button>
+                  </div>
+                  {cursoMsg && (
+                    <div style={{
+                      marginTop: '8px', fontSize: '0.8rem',
+                      color: cursoMsg.includes('Erro') ? 'var(--lcars-red)' : 'var(--lcars-teal)',
+                    }}>{cursoMsg}</div>
+                  )}
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ===== EVENTOS ===== */}
       <div className="lcars-panel">
