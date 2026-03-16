@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import sql from '@/lib/db';
 import { notFound } from 'next/navigation';
+import PhotoGallery from '@/components/PhotoGallery';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,29 +120,7 @@ export default async function EstacaoDetailPage({ params }) {
       </div>
 
       {/* Photo Gallery */}
-      {est.fotos.length > 0 && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(auto-fill, minmax(${est.fotos.length > 6 ? '180px' : '220px'}, 1fr))`,
-          gap: '8px',
-          marginTop: '8px',
-        }}>
-          {est.fotos.map((img, j) => (
-            <div key={j} style={{
-              borderRadius: 'var(--lcars-radius-sm)',
-              overflow: 'hidden',
-              border: '1px solid #333',
-              background: 'var(--lcars-bg-panel)',
-            }}>
-              <img
-                src={img}
-                alt={`${est.nome} ${j + 1}`}
-                style={{ width: '100%', height: '140px', objectFit: 'cover', display: 'block' }}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+      <PhotoGallery fotos={est.fotos} titulo={est.nome} cor={est.cor} />
 
       {/* Back links */}
       <div style={{ textAlign: 'center', padding: '20px', display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
