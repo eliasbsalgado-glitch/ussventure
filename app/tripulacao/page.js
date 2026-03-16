@@ -14,7 +14,7 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function TripulacaoPage() {
-  const rows = await sql`SELECT slug, nome, patente, divisao, departamento, foto FROM fichas ORDER BY slug`;
+  const rows = await sql`SELECT slug, nome, patente, divisao, departamento, foto FROM fichas ORDER BY LOWER(nome)`;
   const fichas = rows.map(r => ({
     slug: r.slug, nome: r.nome, patente: r.patente,
     divisao: r.divisao, departamento: r.departamento, foto: r.foto,
