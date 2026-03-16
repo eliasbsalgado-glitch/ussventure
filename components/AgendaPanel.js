@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 
-export default function AgendaPanel({ divisaoSlug, divisaoCor, divisaoNome }) {
+export default function AgendaPanel({ divisaoSlug, divisaoCor, divisaoNome, readOnly = false }) {
   const { user } = useAuth();
   const [eventos, setEventos] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -30,7 +30,7 @@ export default function AgendaPanel({ divisaoSlug, divisaoCor, divisaoNome }) {
   }, [divisaoSlug]);
 
   // Verificar se o usuario e chefe desta divisao ou admin
-  const canManage = user?.logged && (user.role === 'admin' || user.fichaSlug);
+  const canManage = !readOnly && user?.logged && (user.role === 'admin' || user.fichaSlug);
 
   async function createEvento(e) {
     e.preventDefault();
