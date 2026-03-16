@@ -171,6 +171,9 @@ export default function AdminPage() {
       <div className="lcars-bar gradient" />
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        <Link href="/admin/honrarias" className="lcars-btn orange" style={{ fontSize: '0.85rem' }}>
+          🏅 Gerenciar Honrarias
+        </Link>
         <button onClick={() => { setShowUserManage(!showUserManage); setShowCreateUser(false); }}
           className="lcars-btn sky" style={{ fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}>
           {showUserManage ? '✕ Fechar' : '🔒 Gerenciar Acessos'}

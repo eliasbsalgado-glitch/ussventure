@@ -2,13 +2,29 @@
 
 // ============================================
 // LOGIN — Autenticacao do Sistema LCARS
-// Nivel de acesso: Publico
+// Redirecionamento por role/cargo
 // ============================================
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import Link from 'next/link';
+
+function getRedirectPath(result) {
+  if (result.role === 'admin') return '/admin';
+  if (result.cargos?.includes('capitao')) return '/capitao';
+  if (result.cargos?.includes('chefe_divisao')) return '/chefe-divisao';
+  return '/meu-diario';
+}
+
+function getRoleBadge(user) {
+  if (user.role === 'admin') return { label: 'ADMINISTRADOR', color: 'orange' };
+  const cargos = user.cargos || [];
+  if (cargos.includes('capitao') && cargos.includes('chefe_divisao')) return { label: 'CAPITÃO / CHEFE DE DIVISÃO', color: 'sky' };
+  if (cargos.includes('capitao')) return { label: 'CAPITÃO DE NAVE', color: 'blue' };
+  if (cargos.includes('chefe_divisao')) return { label: 'CHEFE DE DIVISÃO', color: 'teal' };
+  return { label: 'TRIPULANTE', color: 'lavender' };
+}
 
 export default function LoginPage() {
   const { user, login, logout } = useAuth();
@@ -24,7 +40,7 @@ export default function LoginPage() {
     setLoading(true);
     const result = await login(loginName, senha);
     if (result.ok) {
-      router.push(result.role === 'admin' ? '/admin' : '/meu-diario');
+      router.push(getRedirectPath(result));
     } else {
       setError(result.error || 'Erro no login');
     }
@@ -32,6 +48,9 @@ export default function LoginPage() {
   }
 
   if (user?.logged) {
+    const badge = getRoleBadge(user);
+    const cargos = user.cargos || [];
+
     return (
       <div>
         <div className="lcars-hero">
@@ -44,11 +63,17 @@ export default function LoginPage() {
           <div className="lcars-panel-body" style={{ textAlign: 'center', padding: '30px' }}>
             <p style={{ marginBottom: '12px' }}>
               Autenticado como <strong style={{ color: 'var(--lcars-orange)' }}>{user.login}</strong>
-              {' '}— Perfil: <span className="lcars-badge orange">{user.role === 'admin' ? 'ADMINISTRADOR' : 'TRIPULANTE'}</span>
+              {' '}— Perfil: <span className={`lcars-badge ${badge.color}`}>{badge.label}</span>
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               {user.role === 'admin' && (
-                <Link href="/admin" className="lcars-btn blue">Painel Admin</Link>
+                <Link href="/admin" className="lcars-btn orange">Painel Admin</Link>
+              )}
+              {cargos.includes('capitao') && user.naveSlug && (
+                <Link href="/capitao" className="lcars-btn blue">Gerenciar Nave</Link>
+              )}
+              {cargos.includes('chefe_divisao') && user.divisaoSlug && (
+                <Link href="/chefe-divisao" className="lcars-btn teal">Gerenciar Divisão</Link>
               )}
               {user.fichaSlug && (
                 <Link href="/meu-diario" className="lcars-btn sky">Meu Diario de Bordo</Link>

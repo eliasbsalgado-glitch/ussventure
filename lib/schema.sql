@@ -64,8 +64,20 @@ CREATE TABLE IF NOT EXISTS missoes (
   criado_em TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Honrarias / Condecoracoes da Frota
+CREATE TABLE IF NOT EXISTS honrarias (
+  id TEXT PRIMARY KEY,
+  categoria TEXT NOT NULL,
+  nome TEXT NOT NULL,
+  descricao TEXT DEFAULT '',
+  imagem TEXT DEFAULT '',
+  ordem INT DEFAULT 0,
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indice para busca rapida por nome (para endpoint SL)
 CREATE INDEX IF NOT EXISTS idx_fichas_nome_lower ON fichas (LOWER(nome));
 CREATE INDEX IF NOT EXISTS idx_fichas_divisao ON fichas (divisao);
 CREATE INDEX IF NOT EXISTS idx_missoes_nave ON missoes (nave_slug);
 CREATE INDEX IF NOT EXISTS idx_missoes_data ON missoes (data DESC);
+CREATE INDEX IF NOT EXISTS idx_honrarias_categoria ON honrarias (categoria);

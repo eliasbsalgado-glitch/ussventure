@@ -2,7 +2,7 @@
 
 // ============================================
 // AUTH CONTEXT — Gerenciamento de sessao
-// Nivel de acesso: Federacao
+// Suporta cargos: admin, capitao, chefe_divisao, tripulante
 // ============================================
 
 import { createContext, useContext, useState, useEffect } from 'react';
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
     const data = await res.json();
     if (res.ok) {
       setUser({ logged: true, ...data });
-      return { ok: true };
+      return { ok: true, role: data.role, cargos: data.cargos || [], naveSlug: data.naveSlug, divisaoSlug: data.divisaoSlug };
     }
     return { ok: false, error: data.error };
   }

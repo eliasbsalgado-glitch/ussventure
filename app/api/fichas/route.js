@@ -9,8 +9,20 @@ function slugify(str) {
     .replace(/(^-|-$)/g, '');
 }
 
-export async function GET() {
-  const rows = await sql`SELECT * FROM fichas ORDER BY nome`;
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const divisao = searchParams.get('divisao');
+
+  let rows;
+  if (divisao) {
+    rows = await sql`
+      SELECT * FROM fichas
+      WHERE LOWER(TRANSLATE(divisao, 'áàãâéêíóôõúüçÁÀÃÂÉÊÍÓÔÕÚÜÇ', 'aaaaeeiooouucaaaaeeiooouuc')) = ${divisao}
+      ORDER BY nome
+    `;
+  } else {
+    rows = await sql`SELECT * FROM fichas ORDER BY nome`;
+  }
   return NextResponse.json(rows);
 }
 
