@@ -78,6 +78,13 @@ CREATE TABLE IF NOT EXISTS honrarias (
   criado_em TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Dados editaveis das divisoes (descricao, departamentos)
+CREATE TABLE IF NOT EXISTS divisoes_data (
+  divisao_slug TEXT PRIMARY KEY,
+  descricao TEXT DEFAULT '',
+  departamentos JSONB DEFAULT '[]'
+);
+
 -- Indice para busca rapida por nome (para endpoint SL)
 CREATE INDEX IF NOT EXISTS idx_fichas_nome_lower ON fichas (LOWER(nome));
 CREATE INDEX IF NOT EXISTS idx_fichas_divisao ON fichas (divisao);
