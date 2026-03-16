@@ -18,7 +18,7 @@ function slugify(text) {
 export async function GET() {
   const rows = await sql`SELECT * FROM estacoes ORDER BY ordem, criado_em`;
   return NextResponse.json(rows.map(r => ({
-    slug: r.slug, nome: r.nome, cor: r.cor,
+    slug: r.slug, nome: r.nome, cor: r.cor, status: r.status || 'Ativa',
     dataConstrucao: r.data_construcao, construtorSlugs: r.construtor_slugs || [],
     lema: r.lema, descricao: r.descricao, descricaoExtra: r.descricao_extra,
     decks: r.decks || [], fotos: r.fotos || [], ordem: r.ordem,
@@ -33,7 +33,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { nome, cor, dataConstrucao, construtorSlugs, lema, descricao, descricaoExtra, decks, fotos } = body;
+  const { nome, cor, status, dataConstrucao, construtorSlugs, lema, descricao, descricaoExtra, decks, fotos } = body;
   if (!nome?.trim()) return NextResponse.json({ error: 'Nome obrigatorio' }, { status: 400 });
 
   const slug = slugify(nome);
@@ -44,8 +44,8 @@ export async function POST(request) {
   const ordem = (maxOrder[0]?.m || 0) + 1;
 
   await sql`
-    INSERT INTO estacoes (slug, nome, cor, data_construcao, construtor_slugs, lema, descricao, descricao_extra, decks, fotos, ordem)
-    VALUES (${slug}, ${nome.trim()}, ${cor || '#6688CC'}, ${dataConstrucao || ''}, ${JSON.stringify(construtorSlugs || [])}::jsonb, ${lema || ''}, ${descricao || ''}, ${descricaoExtra || ''}, ${JSON.stringify(decks || [])}::jsonb, ${JSON.stringify(fotos || [])}::jsonb, ${ordem})
+    INSERT INTO estacoes (slug, nome, cor, status, data_construcao, construtor_slugs, lema, descricao, descricao_extra, decks, fotos, ordem)
+    VALUES (${slug}, ${nome.trim()}, ${cor || '#6688CC'}, ${status || 'Ativa'}, ${dataConstrucao || ''}, ${JSON.stringify(construtorSlugs || [])}::jsonb, ${lema || ''}, ${descricao || ''}, ${descricaoExtra || ''}, ${JSON.stringify(decks || [])}::jsonb, ${JSON.stringify(fotos || [])}::jsonb, ${ordem})
   `;
 
   return NextResponse.json({ ok: true, slug }, { status: 201 });
@@ -59,7 +59,7 @@ export async function PUT(request) {
   }
 
   const body = await request.json();
-  const { slug, nome, cor, dataConstrucao, construtorSlugs, lema, descricao, descricaoExtra, decks, fotos } = body;
+  const { slug, nome, cor, status, dataConstrucao, construtorSlugs, lema, descricao, descricaoExtra, decks, fotos } = body;
   if (!slug) return NextResponse.json({ error: 'Slug obrigatorio' }, { status: 400 });
 
   const existing = await sql`SELECT slug FROM estacoes WHERE slug = ${slug}`;
@@ -69,6 +69,7 @@ export async function PUT(request) {
     UPDATE estacoes SET
       nome = COALESCE(${nome || null}, nome),
       cor = COALESCE(${cor || null}, cor),
+      status = COALESCE(${status || null}, status),
       data_construcao = COALESCE(${dataConstrucao !== undefined ? dataConstrucao : null}, data_construcao),
       construtor_slugs = COALESCE(${construtorSlugs ? JSON.stringify(construtorSlugs) : null}::jsonb, construtor_slugs),
       lema = COALESCE(${lema !== undefined ? lema : null}, lema),

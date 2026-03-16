@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS estacoes (
   slug TEXT PRIMARY KEY,
   nome TEXT NOT NULL,
   cor TEXT DEFAULT '#6688CC',
+  status TEXT DEFAULT 'Ativa',
   data_construcao TEXT DEFAULT '',
   construtor_slugs JSONB DEFAULT '[]',
   lema TEXT DEFAULT '',

@@ -20,6 +20,7 @@ export default function AdminEstacoesPage() {
   const [showForm, setShowForm] = useState(false);
   const [nome, setNome] = useState('');
   const [cor, setCor] = useState('#6688CC');
+  const [statusEstacao, setStatusEstacao] = useState('Ativa');
   const [dataConstrucao, setDataConstrucao] = useState('');
   const [construtorSlugs, setConstrutorSlugs] = useState([]);
   const [lema, setLema] = useState('');
@@ -74,11 +75,11 @@ export default function AdminEstacoesPage() {
     e.preventDefault(); setMsg('');
     const res = await fetch('/api/estacoes', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, cor, dataConstrucao, construtorSlugs, lema, descricao, descricaoExtra, decks, fotos }),
+      body: JSON.stringify({ nome, cor, status: statusEstacao, dataConstrucao, construtorSlugs, lema, descricao, descricaoExtra, decks, fotos }),
     });
     if (res.ok) {
       setMsg('Estacao criada!');
-      setNome(''); setCor('#6688CC'); setDataConstrucao(''); setConstrutorSlugs([]); setLema(''); setDescricao(''); setDescricaoExtra(''); setDecks([]); setFotos([]);
+      setNome(''); setCor('#6688CC'); setStatusEstacao('Ativa'); setDataConstrucao(''); setConstrutorSlugs([]); setLema(''); setDescricao(''); setDescricaoExtra(''); setDecks([]); setFotos([]);
       setShowForm(false);
       const updated = await fetch('/api/estacoes').then(r => r.json());
       setEstacoes(updated);
@@ -145,7 +146,7 @@ export default function AdminEstacoesPage() {
 
   // Shared form renderer
   function renderForm(formData, setters, onSubmit, submitLabel) {
-    const { nome: fn, cor: fc, dataConstrucao: fdc, construtorSlugs: fcs, lema: fl, descricao: fd, descricaoExtra: fde, decks: fdk, fotos: ff } = formData;
+    const { nome: fn, cor: fc, status: fs, dataConstrucao: fdc, construtorSlugs: fcs, lema: fl, descricao: fd, descricaoExtra: fde, decks: fdk, fotos: ff } = formData;
     return (
       <form onSubmit={onSubmit}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px', marginBottom: '12px' }}>
@@ -163,6 +164,13 @@ export default function AdminEstacoesPage() {
           <div>
             <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Data de Construcao</label>
             <input style={inputStyle} value={fdc} onChange={e => setters.setDataConstrucao(e.target.value)} placeholder="Ex: Data Estelar 20080504" />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Status</label>
+            <select style={inputStyle} value={fs || 'Ativa'} onChange={e => setters.setStatus(e.target.value)}>
+              <option value="Ativa">Ativa</option>
+              <option value="Inativa">Inativa</option>
+            </select>
           </div>
         </div>
 
@@ -267,9 +275,9 @@ export default function AdminEstacoesPage() {
           <div className="lcars-panel-header teal">Nova Estacao Espacial</div>
           <div className="lcars-panel-body">
             {renderForm(
-              { nome, cor, dataConstrucao, construtorSlugs, lema, descricao, descricaoExtra, decks, fotos },
+              { nome, cor, status: statusEstacao, dataConstrucao, construtorSlugs, lema, descricao, descricaoExtra, decks, fotos },
               {
-                setNome, setCor, setDataConstrucao, setLema, setDescricao, setDescricaoExtra, setFotos,
+                setNome, setCor, setStatus: setStatusEstacao, setDataConstrucao, setLema, setDescricao, setDescricaoExtra, setFotos,
                 addConstrutor: (arr, slug) => addConstrutor(arr, setConstrutorSlugs, slug),
                 removeConstrutor: (arr, slug) => removeConstrutor(arr, setConstrutorSlugs, slug),
                 addDeck: (arr) => addDeck(arr, setDecks),
@@ -283,16 +291,16 @@ export default function AdminEstacoesPage() {
         </div>
       )}
 
-      {/* Stations List */}
+      {/* Active Stations */}
       <div className="lcars-panel">
-        <div className="lcars-panel-header sky">Estacoes Cadastradas — {estacoes.length}</div>
+        <div className="lcars-panel-header sky">Estacoes Ativas — {estacoes.filter(e => (e.status || 'Ativa') === 'Ativa').length}</div>
         <div className="lcars-panel-body" style={{ padding: loading ? '30px' : 0 }}>
           {loading ? (
             <div style={{ textAlign: 'center', color: 'var(--lcars-text-dim)' }}>Carregando...</div>
-          ) : estacoes.length === 0 ? (
-            <div style={{ padding: '30px', textAlign: 'center', color: 'var(--lcars-text-dim)' }}>Nenhuma estacao cadastrada.</div>
+          ) : estacoes.filter(e => (e.status || 'Ativa') === 'Ativa').length === 0 ? (
+            <div style={{ padding: '30px', textAlign: 'center', color: 'var(--lcars-text-dim)' }}>Nenhuma estacao ativa.</div>
           ) : (
-            estacoes.map(est => (
+            estacoes.filter(e => (e.status || 'Ativa') === 'Ativa').map(est => (
               <div key={est.slug} style={{ padding: '14px 16px', borderBottom: '1px solid #222' }}>
                 {editing === est.slug ? (
                   renderForm(
@@ -300,6 +308,7 @@ export default function AdminEstacoesPage() {
                     {
                       setNome: v => setEdForm(p => ({ ...p, nome: v })),
                       setCor: v => setEdForm(p => ({ ...p, cor: v })),
+                      setStatus: v => setEdForm(p => ({ ...p, status: v })),
                       setDataConstrucao: v => setEdForm(p => ({ ...p, dataConstrucao: v })),
                       setLema: v => setEdForm(p => ({ ...p, lema: v })),
                       setDescricao: v => setEdForm(p => ({ ...p, descricao: v })),
@@ -320,6 +329,7 @@ export default function AdminEstacoesPage() {
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
                         <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: est.cor, flexShrink: 0 }} />
                         <strong style={{ color: est.cor, fontSize: '1rem' }}>{est.nome}</strong>
+                        <span className={`lcars-badge ${est.status === 'Ativa' ? 'green' : 'red'}`} style={{ fontSize: '0.55rem' }}>{est.status || 'Ativa'}</span>
                       </div>
                       {est.dataConstrucao && <div style={{ fontSize: '0.75rem', color: 'var(--lcars-text-dim)' }}>{est.dataConstrucao}</div>}
                       {est.construtorSlugs?.length > 0 && (
@@ -347,6 +357,58 @@ export default function AdminEstacoesPage() {
           )}
         </div>
       </div>
+
+      {/* Inactive Stations */}
+      {!loading && estacoes.filter(e => e.status === 'Inativa').length > 0 && (
+        <div className="lcars-panel" style={{ marginTop: '16px' }}>
+          <div className="lcars-panel-header red">Estacoes Descomissionadas — {estacoes.filter(e => e.status === 'Inativa').length}</div>
+          <div className="lcars-panel-body" style={{ padding: 0 }}>
+            {estacoes.filter(e => e.status === 'Inativa').map(est => (
+              <div key={est.slug} style={{ padding: '14px 16px', borderBottom: '1px solid #222' }}>
+                {editing === est.slug ? (
+                  renderForm(
+                    edForm,
+                    {
+                      setNome: v => setEdForm(p => ({ ...p, nome: v })),
+                      setCor: v => setEdForm(p => ({ ...p, cor: v })),
+                      setStatus: v => setEdForm(p => ({ ...p, status: v })),
+                      setDataConstrucao: v => setEdForm(p => ({ ...p, dataConstrucao: v })),
+                      setLema: v => setEdForm(p => ({ ...p, lema: v })),
+                      setDescricao: v => setEdForm(p => ({ ...p, descricao: v })),
+                      setDescricaoExtra: v => setEdForm(p => ({ ...p, descricaoExtra: v })),
+                      setFotos: v => setEdForm(p => ({ ...p, fotos: v })),
+                      addConstrutor: (arr, slug) => setEdForm(p => ({ ...p, construtorSlugs: [...(p.construtorSlugs || []).filter(s => s !== slug), slug] })),
+                      removeConstrutor: (arr, slug) => setEdForm(p => ({ ...p, construtorSlugs: (p.construtorSlugs || []).filter(s => s !== slug) })),
+                      addDeck: (arr) => setEdForm(p => ({ ...p, decks: [...(p.decks || []), ''] })),
+                      updateDeck: (arr, i, val) => setEdForm(p => { const d = [...(p.decks || [])]; d[i] = val; return { ...p, decks: d }; }),
+                      removeDeck: (arr, i) => setEdForm(p => ({ ...p, decks: (p.decks || []).filter((_, j) => j !== i) })),
+                    },
+                    salvarEdit,
+                    'Salvar Alteracoes'
+                  )
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, opacity: 0.7 }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: est.cor, flexShrink: 0 }} />
+                        <strong style={{ color: est.cor, fontSize: '1rem' }}>{est.nome}</strong>
+                        <span className="lcars-badge red" style={{ fontSize: '0.55rem' }}>Inativa</span>
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--lcars-text-light)', marginTop: '4px' }}>
+                        {est.descricao?.substring(0, 120)}{est.descricao?.length > 120 ? '...' : ''}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                      <button onClick={() => startEdit(est)} className="lcars-btn blue" style={{ fontSize: '0.65rem', padding: '4px 10px', border: 'none', cursor: 'pointer' }}>Editar</button>
+                      <button onClick={() => setDeleteTarget(est.slug)} className="lcars-btn red" style={{ fontSize: '0.65rem', padding: '4px 10px', border: 'none', cursor: 'pointer' }}>Excluir</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Delete Modal */}
       {deleteTarget && (
