@@ -10,10 +10,10 @@ import { useAuth } from '@/components/AuthContext';
 import Link from 'next/link';
 
 const NAVES_INFO = {
-  'adventure': { nome: 'USS Adventure NCC 74508', classe: 'Valiant', tipo: 'Exploracao', status: 'Ativa', selo: '/img/naves/Logo Adventure Final.png' },
-  'altotting': { nome: 'USS Altotting NCC 171133', classe: 'Nao informada', tipo: 'Patrulhamento', status: 'Ativa', selo: '/img/naves/LOGO_ALTOTTING.png' },
-  'serenity': { nome: 'USS Serenity NCC 7777', classe: 'Scouter Ship', tipo: 'Explorador', status: 'Ativa', selo: '/img/naves/LOGO USS Serenity NCC7777.png' },
-  'suidara': { nome: 'USS Suidara NCC 7808', classe: 'Nao informada', tipo: 'Nao informado', status: 'Ativa', selo: '/img/naves/suidara emblema modificado.png' },
+  'adventure': { nome: 'USS Adventure NCC 74508', selo: '/img/naves/Logo Adventure Final.png' },
+  'altotting': { nome: 'USS Altotting NCC 171133', selo: '/img/naves/LOGO_ALTOTTING.png' },
+  'serenity': { nome: 'USS Serenity NCC 7777', selo: '/img/naves/LOGO USS Serenity NCC7777.png' },
+  'suidara': { nome: 'USS Suidara NCC 7808', selo: '/img/naves/suidara emblema modificado.png' },
 };
 
 export default function CapitaoPage() {
@@ -25,6 +25,12 @@ export default function CapitaoPage() {
   const [selectedCrew, setSelectedCrew] = useState('');
   const [selectedPosto, setSelectedPosto] = useState('Tripulante');
   const [msg, setMsg] = useState('');
+
+  // Ship info editing
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [editClasse, setEditClasse] = useState('');
+  const [editTipo, setEditTipo] = useState('');
+  const [editStatus, setEditStatus] = useState('');
 
   // Missao form
   const [showMissaoForm, setShowMissaoForm] = useState(false);
@@ -42,6 +48,9 @@ export default function CapitaoPage() {
       fetch('/api/fichas').then(r => r.json()),
     ]).then(([nave, fichasList]) => {
       setNaveData(nave);
+      setEditClasse(nave.classe || '');
+      setEditTipo(nave.tipo || '');
+      setEditStatus(nave.status || 'Ativa');
       setFichas(fichasList);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -73,6 +82,25 @@ export default function CapitaoPage() {
     );
   }
 
+  async function salvarInfo(e) {
+    e.preventDefault();
+    setMsg('');
+    const res = await fetch(`/api/naves/${naveSlug}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'updateInfo', classe: editClasse, tipo: editTipo, status: editStatus }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setNaveData(prev => ({ ...prev, classe: data.classe, tipo: data.tipo, status: data.status }));
+      setMsg('Dados da nave atualizados!');
+      setEditingInfo(false);
+    } else {
+      const data = await res.json();
+      setMsg(`Erro: ${data.error}`);
+    }
+  }
+
   async function addTripulante(e) {
     e.preventDefault();
     if (!selectedCrew) return;
@@ -80,17 +108,12 @@ export default function CapitaoPage() {
     const res = await fetch(`/api/naves/${naveSlug}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'addTripulante',
-        fichaSlug: selectedCrew,
-        posto: selectedPosto,
-      }),
+      body: JSON.stringify({ action: 'addTripulante', fichaSlug: selectedCrew, posto: selectedPosto }),
     });
     if (res.ok) {
       setMsg('Tripulante adicionado com sucesso!');
       setSelectedCrew('');
       setSelectedPosto('Tripulante');
-      // Refresh
       const updated = await fetch(`/api/naves/${naveSlug}`).then(r => r.json());
       setNaveData(updated);
     } else {
@@ -161,29 +184,6 @@ export default function CapitaoPage() {
 
       <div className="lcars-bar gradient" />
 
-      {/* Info da Nave */}
-      <div className="lcars-panel" style={{ marginBottom: '16px' }}>
-        <div className="lcars-panel-header blue">Dados da Nave</div>
-        <div className="lcars-panel-body">
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-            {naveInfo?.selo && (
-              <img src={naveInfo.selo} alt={naveInfo.nome} style={{
-                maxWidth: '80px', maxHeight: '80px', objectFit: 'contain',
-                filter: 'drop-shadow(0 0 8px rgba(102,136,204,0.4))',
-              }} />
-            )}
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
-                <div><span style={{ color: 'var(--lcars-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Classe</span><br />{naveInfo?.classe || '—'}</div>
-                <div><span style={{ color: 'var(--lcars-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Tipo</span><br />{naveInfo?.tipo || '—'}</div>
-                <div><span style={{ color: 'var(--lcars-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</span><br /><span className="lcars-badge green">{naveInfo?.status || 'Ativa'}</span></div>
-                <div><span style={{ color: 'var(--lcars-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Tripulantes</span><br />{tripulantes.length}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {msg && (
         <div style={{
           marginBottom: '12px', padding: '10px 16px', fontSize: '0.85rem',
@@ -195,6 +195,59 @@ export default function CapitaoPage() {
           {msg}
         </div>
       )}
+
+      {/* Info da Nave */}
+      <div className="lcars-panel" style={{ marginBottom: '16px' }}>
+        <div className="lcars-panel-header blue">
+          Dados da Nave
+          <button onClick={() => { setEditingInfo(!editingInfo); }}
+            style={{ float: 'right', background: 'transparent', border: 'none', color: 'var(--lcars-sky)', cursor: 'pointer', fontSize: '0.8rem' }}>
+            {editingInfo ? '✕ Fechar' : '✏ Editar'}
+          </button>
+        </div>
+        <div className="lcars-panel-body">
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {naveInfo?.selo && (
+              <img src={naveInfo.selo} alt={naveInfo.nome} style={{
+                maxWidth: '80px', maxHeight: '80px', objectFit: 'contain',
+                filter: 'drop-shadow(0 0 8px rgba(102,136,204,0.4))',
+              }} />
+            )}
+            {editingInfo ? (
+              <form onSubmit={salvarInfo} style={{ flex: 1 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px', marginBottom: '10px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Classe</label>
+                    <input style={{ ...inputStyle, width: '100%' }} value={editClasse} onChange={e => setEditClasse(e.target.value)} placeholder="Ex: Valiant" />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Tipo</label>
+                    <input style={{ ...inputStyle, width: '100%' }} value={editTipo} onChange={e => setEditTipo(e.target.value)} placeholder="Ex: Exploracao" />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Status</label>
+                    <select style={{ ...inputStyle, width: '100%' }} value={editStatus} onChange={e => setEditStatus(e.target.value)}>
+                      <option value="Ativa">Ativa</option>
+                      <option value="Descomissionada">Descomissionada</option>
+                      <option value="Em Reparos">Em Reparos</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" className="lcars-btn blue" style={{ border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>Salvar Dados</button>
+              </form>
+            ) : (
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px' }}>
+                  <div><span style={{ color: 'var(--lcars-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Classe</span><br />{naveData?.classe || '—'}</div>
+                  <div><span style={{ color: 'var(--lcars-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Tipo</span><br />{naveData?.tipo || '—'}</div>
+                  <div><span style={{ color: 'var(--lcars-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</span><br /><span className={`lcars-badge ${naveData?.status === 'Ativa' ? 'green' : 'red'}`}>{naveData?.status || 'Ativa'}</span></div>
+                  <div><span style={{ color: 'var(--lcars-text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Tripulantes</span><br />{tripulantes.length}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Tripulantes */}
       <div className="lcars-panel" style={{ marginBottom: '16px' }}>
@@ -300,7 +353,7 @@ export default function CapitaoPage() {
             <div style={{ padding: '30px', textAlign: 'center', color: 'var(--lcars-text-dim)' }}>Nenhuma missao registrada para esta nave.</div>
           ) : (
             missoes.map((m, i) => (
-              <div key={i} style={{ padding: '14px', borderBottom: '1px solid #222' }}>
+              <div key={m.id || i} style={{ padding: '14px', borderBottom: '1px solid #222' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <strong style={{ color: 'var(--lcars-lavender)' }}>{m.titulo}</strong>
                   <span style={{ fontSize: '0.75rem', color: 'var(--lcars-sky)' }}>{m.data}</span>

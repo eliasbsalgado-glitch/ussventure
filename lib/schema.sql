@@ -45,6 +45,9 @@ CREATE TABLE IF NOT EXISTS agenda_eventos (
 CREATE TABLE IF NOT EXISTS naves_crew (
   nave_slug TEXT PRIMARY KEY,
   capitao_slug TEXT,
+  classe TEXT DEFAULT '',
+  tipo TEXT DEFAULT '',
+  status TEXT DEFAULT 'Ativa',
   tripulantes JSONB DEFAULT '[]',
   missoes JSONB DEFAULT '[]',
   fotos JSONB DEFAULT '[]'

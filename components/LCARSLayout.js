@@ -124,6 +124,12 @@ export default function LCARSLayout({ children }) {
                     {user.role === 'admin' && (
                       <Link href="/admin">ADMIN</Link>
                     )}
+                    {user.cargos?.includes('capitao') && user.naveSlug && (
+                      <Link href="/capitao">CAPITÃO</Link>
+                    )}
+                    {user.cargos?.includes('chefe_divisao') && user.divisaoSlug && (
+                      <Link href="/chefe-divisao">CHEFE DIV.</Link>
+                    )}
                     {user.fichaSlug && (
                       <Link href="/meu-diario">MEU DIÁRIO</Link>
                     )}

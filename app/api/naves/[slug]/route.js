@@ -1,4 +1,4 @@
-// API: /api/naves/[slug] — Crew management
+// API: /api/naves/[slug] — Crew management + ship info editing
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 
@@ -8,20 +8,26 @@ function getSession(request) {
   try { return JSON.parse(cookie.value); } catch { return null; }
 }
 
-// GET — retorna tripulação e missões de uma nave
+// GET — retorna tripulação, missões e info da nave
 export async function GET(request, { params }) {
   const { slug } = await params;
   const rows = await sql`SELECT * FROM naves_crew WHERE nave_slug = ${slug}`;
   if (rows.length === 0) {
-    return NextResponse.json({ capitaoSlug: null, tripulantes: [], missoes: [] });
+    return NextResponse.json({ capitaoSlug: null, classe: '', tipo: '', status: 'Ativa', tripulantes: [], missoes: [], fotos: [] });
   }
   const r = rows[0];
   return NextResponse.json({
-    capitaoSlug: r.capitao_slug, tripulantes: r.tripulantes || [], missoes: r.missoes || [], fotos: r.fotos || [],
+    capitaoSlug: r.capitao_slug,
+    classe: r.classe || '',
+    tipo: r.tipo || '',
+    status: r.status || 'Ativa',
+    tripulantes: r.tripulantes || [],
+    missoes: r.missoes || [],
+    fotos: r.fotos || [],
   });
 }
 
-// PUT — capitão ou admin gerencia tripulação
+// PUT — capitão ou admin gerencia tripulação e info da nave
 export async function PUT(request, { params }) {
   const { slug } = await params;
   const session = getSession(request);
@@ -36,6 +42,9 @@ export async function PUT(request, { params }) {
 
   const naveCrew = {
     capitaoSlug: rows[0].capitao_slug,
+    classe: rows[0].classe || '',
+    tipo: rows[0].tipo || '',
+    status: rows[0].status || 'Ativa',
     tripulantes: rows[0].tripulantes || [],
     missoes: rows[0].missoes || [],
     fotos: rows[0].fotos || [],
@@ -44,7 +53,7 @@ export async function PUT(request, { params }) {
   const isCaptain = session.fichaSlug && session.fichaSlug === naveCrew.capitaoSlug;
   const isAdmin = session.role === 'admin';
   if (!isCaptain && !isAdmin) {
-    return NextResponse.json({ error: 'Apenas o capitao ou admin podem gerenciar a tripulacao' }, { status: 403 });
+    return NextResponse.json({ error: 'Apenas o capitao ou admin podem gerenciar a nave' }, { status: 403 });
   }
 
   const body = await request.json();
@@ -71,6 +80,11 @@ export async function PUT(request, { params }) {
   } else if (action === 'setCapitao') {
     if (!isAdmin) return NextResponse.json({ error: 'Apenas admin pode definir capitao' }, { status: 403 });
     naveCrew.capitaoSlug = body.capitaoSlug || null;
+  } else if (action === 'updateInfo') {
+    // Update ship metadata (classe, tipo, status)
+    if (body.classe !== undefined) naveCrew.classe = body.classe;
+    if (body.tipo !== undefined) naveCrew.tipo = body.tipo;
+    if (body.status !== undefined) naveCrew.status = body.status;
   } else if (action === 'addFoto') {
     const { url, legenda } = body;
     if (!url) return NextResponse.json({ error: 'URL obrigatoria' }, { status: 400 });
@@ -88,10 +102,20 @@ export async function PUT(request, { params }) {
   await sql`
     UPDATE naves_crew SET
       capitao_slug = ${naveCrew.capitaoSlug},
+      classe = ${naveCrew.classe},
+      tipo = ${naveCrew.tipo},
+      status = ${naveCrew.status},
       tripulantes = ${JSON.stringify(naveCrew.tripulantes)}::jsonb,
       fotos = ${JSON.stringify(naveCrew.fotos)}::jsonb
     WHERE nave_slug = ${slug}
   `;
 
-  return NextResponse.json({ ok: true, tripulantes: naveCrew.tripulantes, fotos: naveCrew.fotos });
+  return NextResponse.json({
+    ok: true,
+    classe: naveCrew.classe,
+    tipo: naveCrew.tipo,
+    status: naveCrew.status,
+    tripulantes: naveCrew.tripulantes,
+    fotos: naveCrew.fotos,
+  });
 }

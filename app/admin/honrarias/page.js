@@ -3,9 +3,10 @@
 // ============================================
 // ADMIN — Gerenciar Honrarias / Condecoracoes
 // Nivel de acesso: Admin
+// Com upload de imagem via Vercel Blob
 // ============================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import Link from 'next/link';
 
@@ -22,6 +23,7 @@ export default function AdminHonrariasPage() {
   const [honrarias, setHonrarias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   // Create form
   const [showCreate, setShowCreate] = useState(false);
@@ -29,6 +31,7 @@ export default function AdminHonrariasPage() {
   const [newNome, setNewNome] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newImagem, setNewImagem] = useState('');
+  const createFileRef = useRef(null);
 
   // Edit form
   const [editingId, setEditingId] = useState(null);
@@ -36,6 +39,7 @@ export default function AdminHonrariasPage() {
   const [editNome, setEditNome] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editImagem, setEditImagem] = useState('');
+  const editFileRef = useRef(null);
 
   // Delete modal
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -71,6 +75,41 @@ export default function AdminHonrariasPage() {
     );
   }
 
+  async function uploadImagem(file) {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setUploading(false);
+        return data.url;
+      }
+      setUploading(false);
+      return null;
+    } catch {
+      setUploading(false);
+      return null;
+    }
+  }
+
+  async function handleCreateFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadImagem(file);
+    if (url) setNewImagem(url);
+    else setMsg('Erro no upload da imagem');
+  }
+
+  async function handleEditFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadImagem(file);
+    if (url) setEditImagem(url);
+    else setMsg('Erro no upload da imagem');
+  }
+
   async function criar(e) {
     e.preventDefault();
     setMsg('');
@@ -84,6 +123,7 @@ export default function AdminHonrariasPage() {
       setMsg(`Honraria "${newNome}" criada com sucesso!`);
       setHonrarias(prev => [...prev, data.honraria]);
       setNewNome(''); setNewDesc(''); setNewImagem('');
+      if (createFileRef.current) createFileRef.current.value = '';
       setShowCreate(false);
     } else {
       const data = await res.json();
@@ -143,6 +183,12 @@ export default function AdminHonrariasPage() {
     fontFamily: 'var(--font-lcars)', fontSize: '0.85rem', width: '100%',
   };
 
+  const fileInputStyle = {
+    padding: '6px', background: 'rgba(0,0,0,0.4)', border: '1px solid #555',
+    borderRadius: 'var(--lcars-radius-sm)', color: 'var(--lcars-peach)',
+    fontSize: '0.75rem', width: '100%',
+  };
+
   // Group by category
   const grouped = {};
   CATEGORIAS.forEach(c => { grouped[c.key] = []; });
@@ -180,6 +226,12 @@ export default function AdminHonrariasPage() {
         </div>
       )}
 
+      {uploading && (
+        <div style={{ marginBottom: '12px', padding: '10px 16px', fontSize: '0.85rem', color: 'var(--lcars-sky)', textAlign: 'center' }}>
+          ⏳ Enviando imagem...
+        </div>
+      )}
+
       {/* Create Form */}
       {showCreate && (
         <div className="lcars-panel" style={{ marginBottom: '16px' }}>
@@ -198,15 +250,27 @@ export default function AdminHonrariasPage() {
                   <input style={inputStyle} value={newNome} onChange={e => setNewNome(e.target.value)} required placeholder="Ex: Medalha de Honra" />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>URL da Imagem</label>
-                  <input style={inputStyle} value={newImagem} onChange={e => setNewImagem(e.target.value)} placeholder="/img/condecoracoes/medalha.jpg" />
+                  <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Imagem — Upload</label>
+                  <input type="file" accept="image/*" ref={createFileRef} onChange={handleCreateFileChange} style={fileInputStyle} />
+                  {newImagem && (
+                    <div style={{ marginTop: '6px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <img src={newImagem} alt="Preview" style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '4px' }} />
+                      <span style={{ fontSize: '0.7rem', color: 'var(--lcars-teal)' }}>✓ Imagem carregada</span>
+                    </div>
+                  )}
                 </div>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Ou cole uma URL de imagem</label>
+                <input style={inputStyle} value={newImagem} onChange={e => setNewImagem(e.target.value)} placeholder="/img/condecoracoes/medalha.jpg ou URL externa" />
               </div>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--lcars-text-dim)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Texto Explicativo</label>
                 <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Descricao da honraria..." />
               </div>
-              <button type="submit" className="lcars-btn teal" style={{ border: 'none', cursor: 'pointer' }}>Criar Honraria</button>
+              <button type="submit" disabled={uploading} className="lcars-btn teal" style={{ border: 'none', cursor: uploading ? 'wait' : 'pointer' }}>
+                {uploading ? 'Aguardando upload...' : 'Criar Honraria'}
+              </button>
             </form>
           </div>
         </div>
@@ -255,8 +319,14 @@ export default function AdminHonrariasPage() {
                                       <input style={{ ...inputStyle, fontSize: '0.75rem' }} value={editNome} onChange={e => setEditNome(e.target.value)} required />
                                     </div>
                                     <div>
-                                      <label style={{ fontSize: '0.65rem', color: 'var(--lcars-text-dim)' }}>Imagem</label>
-                                      <input style={{ ...inputStyle, fontSize: '0.75rem' }} value={editImagem} onChange={e => setEditImagem(e.target.value)} />
+                                      <label style={{ fontSize: '0.65rem', color: 'var(--lcars-text-dim)' }}>Upload nova imagem</label>
+                                      <input type="file" accept="image/*" ref={editFileRef} onChange={handleEditFileChange} style={{ ...fileInputStyle, fontSize: '0.7rem' }} />
+                                      {editImagem && (
+                                        <div style={{ marginTop: '4px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                          <img src={editImagem} alt="Preview" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '3px' }} />
+                                          <input style={{ ...inputStyle, fontSize: '0.65rem', flex: 1 }} value={editImagem} onChange={e => setEditImagem(e.target.value)} placeholder="Ou cole URL" />
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                   <div style={{ marginBottom: '8px' }}>
@@ -264,7 +334,7 @@ export default function AdminHonrariasPage() {
                                     <textarea style={{ ...inputStyle, fontSize: '0.75rem', minHeight: '40px', resize: 'vertical' }} value={editDesc} onChange={e => setEditDesc(e.target.value)} />
                                   </div>
                                   <div style={{ display: 'flex', gap: '6px' }}>
-                                    <button type="submit" className="lcars-btn teal" style={{ fontSize: '0.7rem', padding: '4px 12px', border: 'none', cursor: 'pointer' }}>Salvar</button>
+                                    <button type="submit" disabled={uploading} className="lcars-btn teal" style={{ fontSize: '0.7rem', padding: '4px 12px', border: 'none', cursor: 'pointer' }}>Salvar</button>
                                     <button type="button" onClick={() => setEditingId(null)} className="lcars-btn" style={{ fontSize: '0.7rem', padding: '4px 12px', border: 'none', cursor: 'pointer' }}>Cancelar</button>
                                   </div>
                                 </form>
