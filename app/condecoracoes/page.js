@@ -6,6 +6,7 @@
 // ============================================
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 const CATEGORIAS_CONFIG = {
   'academia': { nome: 'Academia', cor: 'var(--lcars-teal)' },
@@ -90,48 +91,50 @@ export default function CondecoacoesPage() {
                   gap: '14px',
                 }}>
                   {items.map(m => (
-                    <div key={m.id} className="lcars-card" style={{ borderColor: config.cor }}>
-                      <div className="lcars-card-body" style={{ textAlign: 'center' }}>
-                        {m.imagem && (
+                    <Link key={m.id} href={`/condecoracoes/${m.id}`} style={{ textDecoration: 'none' }}>
+                      <div className="lcars-card lcars-card-hover" style={{ borderColor: config.cor, height: '100%' }}>
+                        <div className="lcars-card-body" style={{ textAlign: 'center' }}>
+                          {m.imagem && (
+                            <div style={{
+                              padding: '16px',
+                              marginBottom: '12px',
+                              background: 'rgba(0,0,0,0.4)',
+                              borderRadius: 'var(--lcars-radius-sm)',
+                              border: '1px solid #333',
+                            }}>
+                              <img
+                                src={m.imagem}
+                                alt={m.nome}
+                                style={{
+                                  maxWidth: '100px',
+                                  maxHeight: '100px',
+                                  objectFit: 'contain',
+                                  filter: 'drop-shadow(0 0 6px rgba(255,153,0,0.3))',
+                                }}
+                              />
+                            </div>
+                          )}
                           <div style={{
-                            padding: '16px',
-                            marginBottom: '12px',
-                            background: 'rgba(0,0,0,0.4)',
-                            borderRadius: 'var(--lcars-radius-sm)',
-                            border: '1px solid #333',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                            color: config.cor,
+                            marginBottom: '8px',
+                            lineHeight: '1.3',
                           }}>
-                            <img
-                              src={m.imagem}
-                              alt={m.nome}
-                              style={{
-                                maxWidth: '100px',
-                                maxHeight: '100px',
-                                objectFit: 'contain',
-                                filter: 'drop-shadow(0 0 6px rgba(255,153,0,0.3))',
-                              }}
-                            />
+                            {m.nome}
                           </div>
-                        )}
-                        <div style={{
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                          color: config.cor,
-                          marginBottom: '8px',
-                          lineHeight: '1.3',
-                        }}>
-                          {m.nome}
-                        </div>
-                        <div style={{
-                          fontSize: '0.8rem',
-                          color: 'var(--lcars-text-light)',
-                          lineHeight: '1.5',
-                        }}>
-                          {m.descricao}
+                          <div style={{
+                            fontSize: '0.8rem',
+                            color: 'var(--lcars-text-light)',
+                            lineHeight: '1.5',
+                          }}>
+                            {m.descricao}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
