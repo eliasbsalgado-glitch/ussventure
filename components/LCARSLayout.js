@@ -162,7 +162,8 @@ export default function LCARSLayout({ children }) {
             <footer>
               Todos direitos reservados &copy; 2026 Frota Venture <br />
               Desenvolvido por Comandante Eli Pazrel (sailespy2) <br />
-              LCARS Inspired Website Template by <a href="https://www.thelcars.com">www.TheLCARS.com</a>.
+              LCARS Inspired Website Template by <a href="https://www.thelcars.com">www.TheLCARS.com</a>.<br />
+              Star Trek e LCARS são marcas registradas da CBS Studios Inc. Este site não é oficial, não tem fins lucrativos e não é afiliado à CBS ou Paramount Pictures.
             </footer>
           </div>
         </div>
