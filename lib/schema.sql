@@ -85,6 +85,22 @@ CREATE TABLE IF NOT EXISTS divisoes_data (
   departamentos JSONB DEFAULT '[]'
 );
 
+-- Estacoes espaciais da Frota
+CREATE TABLE IF NOT EXISTS estacoes (
+  slug TEXT PRIMARY KEY,
+  nome TEXT NOT NULL,
+  cor TEXT DEFAULT '#6688CC',
+  data_construcao TEXT DEFAULT '',
+  construtor_slugs JSONB DEFAULT '[]',
+  lema TEXT DEFAULT '',
+  descricao TEXT DEFAULT '',
+  descricao_extra TEXT DEFAULT '',
+  decks JSONB DEFAULT '[]',
+  fotos JSONB DEFAULT '[]',
+  ordem INT DEFAULT 0,
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indice para busca rapida por nome (para endpoint SL)
 CREATE INDEX IF NOT EXISTS idx_fichas_nome_lower ON fichas (LOWER(nome));
 CREATE INDEX IF NOT EXISTS idx_fichas_divisao ON fichas (divisao);
