@@ -20,6 +20,67 @@ async function getFicha(slug) {
   };
 }
 
+// Resolve honraria IDs from DB and render condecoracoes
+async function CondecoracoesDisplay({ condecoracoes }) {
+  // Fetch all honrarias to resolve IDs
+  const honrarias = await sql`SELECT id, nome, imagem, categoria FROM honrarias`;
+  const honrariaMap = {};
+  honrarias.forEach(h => { honrariaMap[h.id] = h; });
+
+  // Build resolved list: DB honrarias + legacy file-based fallback
+  const resolved = condecoracoes.map(entry => {
+    if (honrariaMap[entry]) {
+      return { type: 'db', id: entry, nome: honrariaMap[entry].nome, imagem: honrariaMap[entry].imagem };
+    }
+    // Legacy: old file-based entry
+    return { type: 'legacy', file: entry, nome: entry.replace(/\.\w+$/, '').replace(/[_-]/g, ' ') };
+  });
+
+  return (
+    <div className="lcars-panel">
+      <div className="lcars-panel-header lavender">Condecoracoes — {resolved.length}</div>
+      <div className="lcars-panel-body">
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {resolved.map((medal, i) => (
+            <div key={i} style={{
+              width: '80px', textAlign: 'center', padding: '8px 4px',
+              background: 'rgba(0,0,0,0.4)', borderRadius: 'var(--lcars-radius-sm)',
+              border: '1px solid #333',
+            }}>
+              {medal.type === 'db' ? (
+                medal.imagem ? (
+                  <img src={medal.imagem} alt={medal.nome}
+                    style={{ width: '60px', height: '60px', objectFit: 'contain', filter: 'drop-shadow(0 0 4px rgba(255,153,0,0.3))' }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '60px', height: '60px', margin: '0 auto',
+                    background: 'rgba(204,153,204,0.15)', borderRadius: '4px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.5rem', color: 'var(--lcars-lavender)',
+                  }}>★</div>
+                )
+              ) : (
+                <img src={`/img/condecoracoes/${medal.file}`} alt={medal.nome}
+                  style={{ width: '60px', height: '60px', objectFit: 'contain', filter: 'drop-shadow(0 0 4px rgba(255,153,0,0.3))' }}
+                />
+              )}
+              <div style={{
+                fontSize: '0.5rem', marginTop: '4px', lineHeight: '1.2',
+                color: 'var(--lcars-lavender)',
+                overflow: 'hidden', textOverflow: 'ellipsis',
+                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+              }}>
+                {medal.nome}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function generateStaticParams() {
   return [];
 }
@@ -220,24 +281,7 @@ export default async function FichaPage({ params }) {
 
       {/* CONDECORACOES */}
       {ficha.condecoracoes && ficha.condecoracoes.length > 0 && (
-        <div className="lcars-panel">
-          <div className="lcars-panel-header lavender">Condecoracoes</div>
-          <div className="lcars-panel-body">
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              {ficha.condecoracoes.map((medal, i) => (
-                <div key={i} style={{
-                  width: '80px', height: '80px', padding: '8px',
-                  background: 'rgba(0,0,0,0.4)', borderRadius: 'var(--lcars-radius-sm)',
-                  border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <img src={`/img/condecoracoes/${medal}`} alt={medal}
-                    style={{ maxWidth: '60px', maxHeight: '60px', objectFit: 'contain', filter: 'drop-shadow(0 0 4px rgba(255,153,0,0.3))' }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <CondecoracoesDisplay condecoracoes={ficha.condecoracoes} />
       )}
 
       {/* CURSOS */}

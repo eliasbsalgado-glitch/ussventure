@@ -3,62 +3,22 @@
 // ============================================
 // FICHA FORM — Formulario de ficha de servico
 // Componente compartilhado: Nova + Editar
+// Condecoracoes carregadas do banco (honrarias)
 // ============================================
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-// Lista de condecoracoes disponiveis (filenames)
-const MEDALS_LIST = [
-  { file: 'Miles.jpg', nome: "Condecoração Miles O'Brien" },
-  { file: 'ac_professor.jpg', nome: 'Professor da Academia' },
-  { file: 'ac_mestre.jpg', nome: 'Mestre da Academia' },
-  { file: 'ac_doutor.jpg', nome: 'Doutor da Academia' },
-  { file: 'barrete Malcon Reff.png', nome: 'Medalha Malcom Reed' },
-  { file: 'md_jonathan_archer.jpg', nome: 'Medalha Jonathan Archer' },
-  { file: 'md_montgomery_scott.jpg', nome: 'Medalha Montgomery Scott' },
-  { file: 'md_zeffran_cochrane.png', nome: 'Cruz Zeffran Cochrane' },
-  { file: 'md_Jean_Luc.jpg', nome: 'Gran Cruz Jean-Luc Picard' },
-  { file: 'MD_PC_EM_I.png', nome: 'Pavel Chekov N1' },
-  { file: 'MD_PC_EM_II.png', nome: 'Pavel Chekov N2' },
-  { file: 'MD_PC_EM_III.png', nome: 'Pavel Chekov N3' },
-  { file: 'MD_PC_EM_IV.png', nome: 'Pavel Chekov N4' },
-  { file: 'MD_PC_EM_V.png', nome: 'Pavel Chekov N5' },
-  { file: 'MD_JTK_VL_I.png', nome: 'James T. Kirk N1' },
-  { file: 'MD_JTK_VL_II.png', nome: 'James T. Kirk N2' },
-  { file: 'MD_JTK_VL_III.png', nome: 'James T. Kirk N3' },
-  { file: 'MD_JTK_VL_IV.png', nome: 'James T. Kirk N4' },
-  { file: 'MD_JTK_VL_V.png', nome: 'James T. Kirk N5' },
-  { file: 'MD_NU_BS_I.png', nome: 'Niota Uhura N1' },
-  { file: 'MD_NU_BS_II.png', nome: 'Niota Uhura N2' },
-  { file: 'MD_NU_BS_III.png', nome: 'Niota Uhura N3' },
-  { file: 'MD_NU_BS_IV.png', nome: 'Niota Uhura N4' },
-  { file: 'MD_NU_BS_V.png', nome: 'Niota Uhura N5' },
-  { file: 'MD_SP_DT_I.png', nome: 'Spock N1' },
-  { file: 'MD_SP_DT_II.png', nome: 'Spock N2' },
-  { file: 'MD_SP_DT_III.png', nome: 'Spock N3' },
-  { file: 'MD_SP_DT_IV.png', nome: 'Spock N4' },
-  { file: 'MD_SP_DT_V.png', nome: 'Spock N5' },
-  { file: 'SC_Data_NJ.jpg', nome: 'Data Script Junior' },
-  { file: 'SC_Data_NS.jpg', nome: 'Data Script Senior' },
-  { file: 'SC_Data_NA.jpg', nome: 'Data Script Advanced' },
-  { file: 'ConstJ.jpg', nome: 'Construtor Junior' },
-  { file: 'ConstS.jpg', nome: 'Construtor Senior' },
-  { file: 'ConstA.jpg', nome: 'Construtor Advanced' },
-  { file: 'barrete_1_ano.jpg', nome: '1 Ano de Servico' },
-  { file: 'barrete_2_anos.jpg', nome: '2 Anos de Servico' },
-  { file: 'barrete_3_anos.jpg', nome: '3 Anos de Servico' },
-  { file: 'BAR_ano_04.jpg', nome: '4 Anos de Servico' },
-  { file: 'barrete de 5 anos.jpg', nome: '5 Anos de Servico' },
-  { file: 'barrete de 6 anos.jpg', nome: '6 Anos de Servico' },
-  { file: 'barrete de 7 anos.jpg', nome: '7 Anos de Servico' },
-  { file: 'barrete de 8 anos.jpg', nome: '8 Anos de Servico' },
-  { file: 'barrete de 9 anos.jpg', nome: '9 Anos de Servico' },
-  { file: 'barrete de 10 anos.jpg', nome: '10 Anos de Servico' },
-];
 
 const PATENTES = ['Almirante', 'Comodoro', 'Capitao', 'Comandante', 'Tenente Comandante', 'Tenente', 'Tenente Junior', 'Alferes', 'Cadete', 'Tripulante Classe 2', 'Tripulante Classe 3', 'Recruta'];
 const DIVISOES = ['Comando', 'Academia', 'Ciencias', 'Comunicacoes', 'Engenharia', 'Operacoes', 'Tatico', 'Civil', 'Reserva'];
+
+const CATEGORIAS_LABEL = {
+  'academia': 'Academia',
+  'merito': 'Mérito',
+  'tecnicas': 'Técnicas e Desenvolvimento',
+  'tempo_servico': 'Tempo de Serviço',
+  'outros': 'Outros',
+};
 
 const inputStyle = {
   width: '100%', padding: '10px 14px',
@@ -83,7 +43,18 @@ export default function FichaForm({ initial, isEdit }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  function set(field, value) { setForm({ ...form, [field]: value }); }
+  // Honrarias from database
+  const [honrarias, setHonrarias] = useState([]);
+  const [loadingHonrarias, setLoadingHonrarias] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/honrarias')
+      .then(r => r.json())
+      .then(data => { setHonrarias(data); setLoadingHonrarias(false); })
+      .catch(() => setLoadingHonrarias(false));
+  }, []);
+
+  function set(field, value) { setForm(prev => ({ ...prev, [field]: value })); }
 
   // Timeline
   function addTimeline() { set('timeline', [...form.timeline, { data: '', evento: '' }]); }
@@ -99,10 +70,25 @@ export default function FichaForm({ initial, isEdit }) {
   }
   function removeCurso(i) { set('cursos', form.cursos.filter((_, j) => j !== i)); }
 
-  // Condecoracoes toggle
-  function toggleMedal(file) {
-    const has = form.condecoracoes.includes(file);
-    set('condecoracoes', has ? form.condecoracoes.filter(m => m !== file) : [...form.condecoracoes, file]);
+  // Condecoracoes toggle — now with auto-timeline
+  function toggleMedal(honrariaId) {
+    const has = form.condecoracoes.includes(honrariaId);
+    if (has) {
+      // Remove condecoracao
+      set('condecoracoes', form.condecoracoes.filter(m => m !== honrariaId));
+    } else {
+      // Add condecoracao + auto-add timeline event
+      const honraria = honrarias.find(h => h.id === honrariaId);
+      const newCondecoracoes = [...form.condecoracoes, honrariaId];
+      const hoje = new Date().toISOString().split('T')[0];
+      const eventoTexto = `Recebeu Condecoração de ${honraria?.nome || honrariaId}`;
+
+      // Check if timeline already has this exact event to avoid duplicates
+      const alreadyExists = form.timeline.some(ev => ev.evento === eventoTexto);
+      const newTimeline = alreadyExists ? form.timeline : [...form.timeline, { data: hoje, evento: eventoTexto }];
+
+      setForm(prev => ({ ...prev, condecoracoes: newCondecoracoes, timeline: newTimeline }));
+    }
   }
 
   async function handleSubmit(e) {
@@ -122,6 +108,17 @@ export default function FichaForm({ initial, isEdit }) {
       setSaving(false);
     }
   }
+
+  // Group honrarias by category
+  const honrariasByCategoria = {};
+  honrarias.forEach(h => {
+    if (!honrariasByCategoria[h.categoria]) honrariasByCategoria[h.categoria] = [];
+    honrariasByCategoria[h.categoria].push(h);
+  });
+
+  // Category order
+  const catOrder = ['academia', 'merito', 'tecnicas', 'tempo_servico', 'outros'];
+  const sortedCats = catOrder.filter(c => honrariasByCategoria[c]);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -193,7 +190,6 @@ export default function FichaForm({ initial, isEdit }) {
                       setUploading(true);
                       const fd = new FormData();
                       fd.append('file', file);
-                      // Enviar URL antiga para substituicao (deleta blob anterior)
                       if (form.foto) fd.append('oldUrl', form.foto);
                       try {
                         const res = await fetch('/api/upload', { method: 'POST', body: fd });
@@ -249,34 +245,69 @@ export default function FichaForm({ initial, isEdit }) {
         </div>
       </div>
 
-      {/* CONDECORACOES */}
+      {/* CONDECORACOES — FROM DATABASE */}
       <div className="lcars-panel">
-        <div className="lcars-panel-header lavender">Condecoracoes</div>
+        <div className="lcars-panel-header lavender">
+          Condecoracoes — {form.condecoracoes.length} atribuidas
+        </div>
         <div className="lcars-panel-body">
-          <p style={{ fontSize: '0.75rem', color: 'var(--lcars-text-dim)', marginBottom: '12px' }}>
-            Clique nas medalhas para atribuir/remover:
+          <p style={{ fontSize: '0.75rem', color: 'var(--lcars-text-dim)', marginBottom: '4px' }}>
+            Clique nas medalhas para atribuir/remover.
+            <span style={{ color: 'var(--lcars-teal)' }}> Ao atribuir, um evento sera adicionado automaticamente na linha do tempo.</span>
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {MEDALS_LIST.map((m, i) => {
-              const selected = form.condecoracoes.includes(m.file);
-              return (
-                <div key={i} onClick={() => toggleMedal(m.file)} style={{
-                  cursor: 'pointer', width: '70px', textAlign: 'center',
-                  padding: '6px', borderRadius: 'var(--lcars-radius-sm)',
-                  background: selected ? 'rgba(204,153,204,0.2)' : 'rgba(0,0,0,0.3)',
-                  border: selected ? '2px solid var(--lcars-lavender)' : '2px solid transparent',
-                  transition: 'all 0.2s',
+
+          {loadingHonrarias ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--lcars-text-dim)' }}>Carregando honrarias...</div>
+          ) : honrarias.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--lcars-text-dim)' }}>Nenhuma honraria cadastrada no banco.</div>
+          ) : (
+            sortedCats.map(cat => (
+              <div key={cat} style={{ marginBottom: '16px' }}>
+                <div style={{
+                  fontSize: '0.7rem', color: 'var(--lcars-lavender)', textTransform: 'uppercase',
+                  letterSpacing: '2px', marginBottom: '8px', paddingBottom: '4px',
+                  borderBottom: '1px solid rgba(204,153,204,0.2)',
                 }}>
-                  <img src={`/img/condecoracoes/${m.file}`} alt={m.nome}
-                    style={{ width: '45px', height: '45px', objectFit: 'contain', opacity: selected ? 1 : 0.4 }}
-                  />
-                  <div style={{ fontSize: '0.55rem', color: selected ? 'var(--lcars-lavender)' : '#555', marginTop: '2px', lineHeight: '1.2' }}>
-                    {m.nome}
-                  </div>
+                  {CATEGORIAS_LABEL[cat] || cat}
                 </div>
-              );
-            })}
-          </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {honrariasByCategoria[cat].map(h => {
+                    const selected = form.condecoracoes.includes(h.id);
+                    return (
+                      <div key={h.id} onClick={() => toggleMedal(h.id)} style={{
+                        cursor: 'pointer', width: '72px', textAlign: 'center',
+                        padding: '6px 4px', borderRadius: 'var(--lcars-radius-sm)',
+                        background: selected ? 'rgba(204,153,204,0.2)' : 'rgba(0,0,0,0.3)',
+                        border: selected ? '2px solid var(--lcars-lavender)' : '2px solid transparent',
+                        transition: 'all 0.2s',
+                      }}>
+                        {h.imagem ? (
+                          <img src={h.imagem} alt={h.nome}
+                            style={{ width: '48px', height: '48px', objectFit: 'contain', opacity: selected ? 1 : 0.4 }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '48px', height: '48px', margin: '0 auto',
+                            background: 'rgba(204,153,204,0.15)', borderRadius: '4px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '0.5rem', color: '#555', opacity: selected ? 1 : 0.4,
+                          }}>SEM IMG</div>
+                        )}
+                        <div style={{
+                          fontSize: '0.5rem', marginTop: '3px', lineHeight: '1.2',
+                          color: selected ? 'var(--lcars-lavender)' : '#555',
+                          overflow: 'hidden', textOverflow: 'ellipsis',
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                        }}>
+                          {h.nome}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
